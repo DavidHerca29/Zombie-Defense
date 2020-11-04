@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 public class Tablero extends JFrame {
 
@@ -11,52 +12,71 @@ public class Tablero extends JFrame {
     private Personaje matrizLogica[][];
     private Color colorNegro = Color.BLACK;
     private JPanel panelContenedor = new JPanel();
-    private ImageIcon guerreroImg = new ImageIcon("src/Imagenes/Guerrero1.png");
-    private ImageIcon arqueroImg = new ImageIcon("src/Imagenes/Arquero.png");
-    private ImageIcon granjeroImg = new ImageIcon("src/Imagenes/Personaje con guadaña.png");
-    private ImageIcon baseImg = new ImageIcon("src/Imagenes/HQ.jpg");
+
+    private ArrayList<Personaje> personajes = new ArrayList<Personaje>();
+    private ArrayList<Zombie> zombies = new ArrayList<Zombie>();
+    private ArrayList<Casilla> spawningPoints = new ArrayList<Casilla>();
+
+    private LableHandler lableHandler = new LableHandler();
 
     private int idPersonajes = 0;
 
     public Tablero(){
+        setSize( 1100, 700);
+        setResizable(true);
+        setVisible(true);
+        setLocationRelativeTo(null);
+        setLayout(null);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("Zombie Defense");
-        // IMAGENES ESCALADAS
-        guerreroImg = scaleImage(guerreroImg, 75, 50);
-        arqueroImg = scaleImage(arqueroImg, 75, 50);
-        baseImg = scaleImage(baseImg, 75, 50);
-
-        LableHandler lableHandler = new LableHandler();
 
         panelContenedor.setLayout(new GridLayout(12,12));
         panelContenedor.setBounds(210, 15, 870, 640);
         panelContenedor.setBorder(BorderFactory.createLineBorder(new Color(82, 35, 35),10));
 
-        Guerrero guerrero = new Guerrero(0, 0, guerreroImg, 100, 20, 0, 0, 1, 2, idPersonajes);
-        Arquero arquero = new Arquero(0, 4, arqueroImg, 80, 15, 0, 0, 11, 5 ,idPersonajes);
+        Guerrero guerrero = new Guerrero(7, 0);
+        Arquero arquero = new Arquero(6, 0);
+        Agente agente = new Agente(8,0);
+        personajes.add(guerrero);
+        personajes.add(arquero);
+        personajes.add(agente);
+
 
         for (int i = 0; i < 12; i++){
             for (int j = 0; j < 12; j++){
-                cuadradosG[i][j] = new Casilla(0);
+                if (i==11 && j==0){
+                    cuadradosG[i][j] = new Base(i,j);
+                }
+                else if (i==0 && j==11){
+                    cuadradosG[0][11] = new SpawningPoint(0,11);
+                }
+                else {
+                    cuadradosG[i][j] = new Casilla(i,j);
+                }
                 panelContenedor.add(cuadradosG[i][j]);
                 cuadradosG[i][j].addActionListener(lableHandler);
-                cuadradosG[i][j].setBackground(new Color(45, 106, 31));
             }
         }
-        cuadradosG[11][0].setIcon(baseImg);
-        cuadradosG[11][0].setEstado(1);
+        for (int i=0; i<personajes.size(); i++){
+            cuadradosG[personajes.get(i).getPosicionLinea()][personajes.get(i).getPosicionColumna()] = new JugadorCasilla(personajes.get(i).getPosicionLinea(),personajes.get(i).getPosicionColumna(), personajes.get(i));
+        }
+        panelContenedor.setVisible(true);
+        panelContenedor = ActualizarTablero();
 
-        cuadradosG[guerrero.getPosicionLinea()][guerrero.getPosicionColumna()].setIcon(guerrero.getDibujo());
-        cuadradosG[guerrero.getPosicionLinea()][guerrero.getPosicionColumna()].setEstado(4);
-        cuadradosG[arquero.getPosicionLinea()][arquero.getPosicionColumna()].setIcon(arquero.getDibujo());
-        cuadradosG[arquero.getPosicionLinea()][arquero.getPosicionColumna()].setEstado(4);
-
-        setSize( 1100, 700);
-        setResizable(false);
-        setVisible(true);
-        setLocationRelativeTo(null);
-        setLayout(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         add(panelContenedor);
+    }
+    private JPanel ActualizarTablero(){
+        JPanel tab = new JPanel();
+        tab.setLayout(new GridLayout(12,12));
+        tab.setBounds(210, 15, 870, 640);
+        tab.setBorder(BorderFactory.createLineBorder(new Color(82, 35, 35),10));
+        for (int i=0;i<12;i++){
+            for (int j=0;j<12;j++){
+                tab.add(cuadradosG[i][j]);
+                cuadradosG[i][j].addActionListener(lableHandler);
+            }
+        }
+        return tab;
     }
     private class LableHandler  implements ActionListener {
 
@@ -73,26 +93,7 @@ public class Tablero extends JFrame {
             }
         }
     }
-    private class PanelTab extends JPanel{
+    private class PanelStats extends JPanel{
 
-    }
-    public ImageIcon scaleImage(ImageIcon icon, int w, int h)
-    {
-        int nw = icon.getIconWidth();
-        int nh = icon.getIconHeight();
-
-        if(icon.getIconWidth() > w)
-        {
-            nw = w;
-            nh = (nw * icon.getIconHeight()) / icon.getIconWidth();
-        }
-
-        if(nh > h)
-        {
-            nh = h;
-            nw = (icon.getIconWidth() * nh) / icon.getIconHeight();
-        }
-
-        return new ImageIcon(icon.getImage().getScaledInstance(nw, nh, Image.SCALE_DEFAULT));
     }
 }
