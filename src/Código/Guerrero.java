@@ -8,7 +8,7 @@ public class Guerrero extends Personaje{
     private boolean evadirAtaque=false;
 
     public Guerrero(int posicionLinea, int posicionColumna) {
-        super(posicionLinea, posicionColumna, new ImageIcon("src/Imagenes/Guerrero1.png"), 150,5, 0, new Maza());
+        super(posicionLinea, posicionColumna, new ImageIcon("src/Imagenes/Guerrero1.png"), 150,5, 0, new Maza(),1,1);
         this.setDibujo(scaleImage(getDibujo(),50,50));
     }
     // DEBO PONER LA IMAGEN POR CADA PERSONAJE
@@ -36,6 +36,17 @@ public class Guerrero extends Personaje{
 
     public void setHabAmortiguar(boolean habAmortiguar) {
         this.habAmortiguar = habAmortiguar;
+    }
+
+    @Override
+    public void resetTurno() {
+        if (habAtacarDoble){
+            setAtaquesPorTurno(2);
+        }
+        else {
+            setAtaquesPorTurno(1);
+        }
+        setDesplazamientoPorTurno(1);
     }
 
     @Override

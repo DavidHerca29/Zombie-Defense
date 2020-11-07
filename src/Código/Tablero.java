@@ -20,6 +20,8 @@ public class Tablero extends JFrame {
     private LableHandler lableHandler = new LableHandler();
     private PanelStats statsPanel = new PanelStats();
 
+    private int turno = 0;
+
     public Tablero(){
         setSize( 1235, 726);
         setResizable(false);
@@ -71,6 +73,10 @@ public class Tablero extends JFrame {
 
         add(panelContenedor);
         add(statsPanel);
+        turnoJugador();
+    }
+    private void turnoJugador(){
+
     }
     private JInternalFrame ActualizarTablero(){
         JInternalFrame tab = new JInternalFrame();
@@ -94,8 +100,14 @@ public class Tablero extends JFrame {
             for (int i=0; i<12; i++){
                 for (int j=0;j<12;j++){
                     if (botonPresionado==cuadradosG[i][j]){
-                        System.out.println(cuadradosG[i][j].getX() + " , " + cuadradosG[i][j].getY());
                         cuadradosG[i][j].setBorder(BorderFactory.createLineBorder(Color.RED));
+                        cuadradosG[i][j].setSelected(true);
+                        if (botonPresionado instanceof JugadorCasilla)
+                            for (int k=0;k<personajes.size();k++){
+                                if (i==personajes.get(k).getPosicionLinea() && j==personajes.get(k).getPosicionColumna()){
+
+                                }
+                            }
                     }
                 }
             }
@@ -211,4 +223,5 @@ public class Tablero extends JFrame {
             }
         }
     }
+
 }

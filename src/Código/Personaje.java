@@ -13,10 +13,12 @@ public abstract class Personaje {
     private int nivel;
     private int rango;
     private Arma arma;
+    private int ataquesPorTurno;
+    private int desplazamientoPorTurno;
     //private int ID;
 
 
-    public Personaje(int posicionLinea, int posicionColumna, ImageIcon dibujo, int salud, int armadura, int experiencia, Arma arma) {
+    public Personaje(int posicionLinea, int posicionColumna, ImageIcon dibujo, int salud, int armadura, int experiencia, Arma arma, int ataquesPorTurno, int desplazamientoPorTurno) {
         this.posicionLinea = posicionLinea;
         this.posicionColumna = posicionColumna;
         this.dibujo = dibujo;
@@ -25,7 +27,27 @@ public abstract class Personaje {
         this.experiencia = experiencia;
         this.nivel = 1;
         this.arma = arma;
+        this.desplazamientoPorTurno = desplazamientoPorTurno;
+        this.ataquesPorTurno = ataquesPorTurno;
     }
+
+    public int getAtaquesPorTurno() {
+        return ataquesPorTurno;
+    }
+
+    public void setAtaquesPorTurno(int ataquesPorTurno) {
+        this.ataquesPorTurno = ataquesPorTurno;
+    }
+
+    public int getDesplazamientoPorTurno() {
+        return desplazamientoPorTurno;
+    }
+
+    public void setDesplazamientoPorTurno(int desplazamientoPorTurno) {
+        this.desplazamientoPorTurno = desplazamientoPorTurno;
+    }
+
+    public abstract void resetTurno();
     public ImageIcon scaleImage(ImageIcon icon, int w, int h)
     {
         int nw = icon.getIconWidth();

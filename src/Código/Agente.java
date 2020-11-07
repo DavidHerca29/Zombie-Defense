@@ -10,7 +10,7 @@ public class Agente extends Personaje{
 
 
     public Agente(int posicionLinea, int posicionColumna) {
-        super(posicionLinea, posicionColumna, new ImageIcon("src/Imagenes/Agente.jpg"),110, 10, 0, new Pistola());
+        super(posicionLinea, posicionColumna, new ImageIcon("src/Imagenes/Agente.jpg"),110, 10, 0, new Pistola(), 1, 1);
         this.setDibujo(scaleImage(getDibujo(),50,50));
     }
 
@@ -36,6 +36,17 @@ public class Agente extends Personaje{
 
     public void setDuplicarExperiencia(boolean duplicarExperiencia) {
         this.duplicarExperiencia = duplicarExperiencia;
+    }
+
+    @Override
+    public void resetTurno() {
+        if (moverseDoble){
+            setDesplazamientoPorTurno(2);
+        }
+        else {
+            setDesplazamientoPorTurno(1);
+        }
+        setAtaquesPorTurno(1);
     }
 
     @Override
