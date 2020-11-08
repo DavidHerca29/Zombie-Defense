@@ -6,7 +6,7 @@ import java.awt.*;
 public class Casilla extends JButton {
     private int posX;
     private int posY;
-    private ImageIcon imagen;
+    private ImageIcon imagen=null;
     // En vez de estado vamos a usar herencia
 
 
@@ -81,7 +81,7 @@ class Montaña extends Casilla{
 class Escombro extends Casilla{
     public Escombro(int posX, int posY) {
         super(posX, posY);
-        this.setImagen(new ImageIcon("src/Imagenes/Escomro.jpg"));
+        this.setImagen(new ImageIcon("src/Imagenes/Escombro.jpg"));
         this.setImagen(scaleImage(getImagen(),50,50));
         this.setIcon(getImagen());
     }
@@ -91,6 +91,7 @@ class JugadorCasilla extends Casilla{
     public JugadorCasilla(int posX, int posY, Personaje personaje) {
         super(posX, posY);
         this.personaje=personaje;
+        this.setImagen(personaje.getDibujo());
         this.setIcon(personaje.getDibujo());
     }
 
@@ -107,6 +108,7 @@ class ZombieCasilla extends Casilla{
     public ZombieCasilla(int posX, int posY, Zombie zombie) {
         super(posX, posY);
         this.zombie = zombie;
+        this.setImagen(zombie.getDibujo());
         this.setIcon(zombie.getDibujo());
     }
 

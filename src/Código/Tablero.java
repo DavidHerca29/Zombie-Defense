@@ -16,7 +16,7 @@ public class Tablero extends JFrame {
 
     private ArrayList<Personaje> personajes = new ArrayList<Personaje>();
     private ArrayList<Zombie> zombies = new ArrayList<Zombie>();
-    private ArrayList<Casilla> spawningPoints = new ArrayList<Casilla>();
+    private ArrayList<SpawningPoint> spawningPoints = new ArrayList<SpawningPoint>();
 
     private LableHandler lableHandler = new LableHandler();
     private PanelStats statsPanel = new PanelStats();
@@ -43,32 +43,9 @@ public class Tablero extends JFrame {
         panelContenedor.setVisible(true);
         panelContenedor.setEnabled(true);
 
-        Guerrero guerrero = new Guerrero(7, 0);
-        Arquero arquero = new Arquero(6, 0);
-        Agente agente = new Agente(8,0);
-        personajes.add(guerrero);
-        personajes.add(arquero);
-        personajes.add(agente);
+        CrearMapaNuevo();
+        for (int i=0;i<5;i++){
 
-
-        for (int i = 0; i < 12; i++){
-            for (int j = 0; j < 12; j++){
-                if (i==11 && j==0){
-                    cuadradosGLogico[i][j] = new Base(i,j);
-                }
-                else if (i==0 && j==11){
-                    cuadradosGLogico[0][11] = new SpawningPoint(0,11);
-                }
-                else {
-                    cuadradosGLogico[i][j] = new Casilla(i,j);
-                }
-                botonesGraficos[i][j] = new JButton(cuadradosGLogico[i][j].getIcon());
-                panelContenedor.add(botonesGraficos[i][j]);
-                botonesGraficos[i][j].addActionListener(lableHandler);
-            }
-        }
-        for (int i=0; i<personajes.size(); i++){
-            cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(i).getX(),personajes.get(i).getY(), personajes.get(i));
         }
         panelContenedor.setVisible(true);
         panelContenedor.setClosable(false);
@@ -89,6 +66,71 @@ public class Tablero extends JFrame {
                 botonesGraficos[i][j].setIcon(cuadradosGLogico[i][j].getIcon());
                 botonesGraficos[i][j].setBorder(cuadradosGLogico[i][j].getBorder());
             }
+        }
+    }
+    private void CrearMapaNuevo(){
+        for (int i = 0; i < 12; i++){
+            for (int j = 0; j < 12; j++){
+                if (i==11 && j==0){
+                    cuadradosGLogico[i][j] = new Base(i,j);
+                }
+                else if (i==0 && j==11){
+                    if (!spawningPoints.isEmpty()){
+                        spawningPoints.clear();
+                    }
+                    cuadradosGLogico[0][11] = new SpawningPoint(0,11);
+                    spawningPoints.add((SpawningPoint) cuadradosGLogico[0][11]);
+                }
+                else {
+                    cuadradosGLogico[i][j] = new Casilla(i,j);
+                }
+                botonesGraficos[i][j] = new JButton(cuadradosGLogico[i][j].getIcon());
+                panelContenedor.add(botonesGraficos[i][j]);
+                botonesGraficos[i][j].addActionListener(lableHandler);
+            }
+        }
+        AñadirPersonajes();
+        AñadirObstaculos();
+    }
+    private void AñadirObstaculos(){
+        int numAleatorioX;
+        int numAleatorioY;
+        boolean bandCiclo;
+        for (int i =0;i<8;i++){
+            bandCiclo = true;
+            while (bandCiclo) {
+                numAleatorioX = (int) Math.floor(Math.random() * (12));
+                numAleatorioY = (int) Math.floor(Math.random() * (12));
+                if (cuadradosGLogico[numAleatorioX][numAleatorioY].getImagen() == null) {
+                    cuadradosGLogico[numAleatorioX][numAleatorioY] = new Montaña(numAleatorioX, numAleatorioY);
+                    bandCiclo=false;
+                }
+            }
+        }
+        for (int i=0;i<5;i++){
+            bandCiclo = true;
+            while (bandCiclo){
+                numAleatorioX = (int) Math.floor(Math.random() * (12));
+                numAleatorioY = (int) Math.floor(Math.random() * (12));
+                if (cuadradosGLogico[numAleatorioX][numAleatorioY].getImagen() == null){
+                    cuadradosGLogico[numAleatorioX][numAleatorioY] = new Escombro(numAleatorioX, numAleatorioY);
+                    bandCiclo=false;
+                }
+            }
+        }
+    }
+    private void AñadirPersonajes(){
+        if (!personajes.isEmpty()){
+            personajes.clear();
+        }
+        Guerrero guerrero = new Guerrero(7, 0);
+        Arquero arquero = new Arquero(6, 0);
+        Agente agente = new Agente(8,0);
+        personajes.add(guerrero);
+        personajes.add(arquero);
+        personajes.add(agente);
+        for (int i=0; i<personajes.size(); i++){
+            cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(i).getX(),personajes.get(i).getY(), personajes.get(i));
         }
     }
     private class LableHandler  implements ActionListener {
@@ -161,49 +203,65 @@ public class Tablero extends JFrame {
         for (int k=0;k<personajes.size();k++){
             if (personajes.get(k) instanceof Guerrero){
                 if (guerreroSeleccionado){
-                    actualX = personajes.get(k).getX();
-                    actualY = personajes.get(k).getY();
-                    if (isValidMove(actualX, actualY, moverX, moverY)){
-                        cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = new Casilla(personajes.get(k).getX(),personajes.get(k).getY());
-                        personajes.get(k).setX(moverX);
-                        personajes.get(k).setY(moverY);
-                        cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(k).getX(),personajes.get(k).getY(), personajes.get(k));
-                        cuadradosGLogico[moverX][moverY].setBorder(BorderFactory.createLineBorder(Color.RED));
+                    if (personajes.get(k).getDesplazamientoPorTurno()>0) {
+                        actualX = personajes.get(k).getX();
+                        actualY = personajes.get(k).getY();
+                        if (isValidMove(actualX, actualY, moverX, moverY)) {
+                            cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = new Casilla(personajes.get(k).getX(), personajes.get(k).getY());
+                            personajes.get(k).setX(moverX);
+                            personajes.get(k).setY(moverY);
+                            personajes.get(k).setDesplazamientoPorTurno(personajes.get(k).getDesplazamientoPorTurno()-1);
+                            cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(k).getX(), personajes.get(k).getY(), personajes.get(k));
+                            cuadradosGLogico[moverX][moverY].setBorder(BorderFactory.createLineBorder(Color.RED));
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Acción inválida. Cada personaje solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
+                        }
                     }
                     else {
-                        JOptionPane.showMessageDialog(null, "Acción inválida. Cada personaje solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
+                        JOptionPane.showMessageDialog(null, "El guerrero ya no tiene movimientos restantes durante este turno.");
+                        guerreroSeleccionado = false;
                     }
                 }
             }
             else if (personajes.get(k) instanceof Arquero){
                 if (arqueroSeleccionado){
-                    actualX = personajes.get(k).getX();
-                    actualY = personajes.get(k).getY();
-                    if (isValidMove(actualX, actualY, moverX, moverY)){
-                        cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = new Casilla(personajes.get(k).getX(),personajes.get(k).getY());
-                        personajes.get(k).setX(moverX);
-                        personajes.get(k).setY(moverY);
-                        cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(k).getX(),personajes.get(k).getY(), personajes.get(k));
-                        cuadradosGLogico[moverX][moverY].setBorder(BorderFactory.createLineBorder(Color.RED));
-                    }
-                    else {
-                        JOptionPane.showMessageDialog(null, "Acción inválida. Cada personaje solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
+                    if (personajes.get(k).getDesplazamientoPorTurno()>0) {
+                        actualX = personajes.get(k).getX();
+                        actualY = personajes.get(k).getY();
+                        if (isValidMove(actualX, actualY, moverX, moverY)) {
+                            cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = new Casilla(personajes.get(k).getX(), personajes.get(k).getY());
+                            personajes.get(k).setX(moverX);
+                            personajes.get(k).setY(moverY);
+                            personajes.get(k).setDesplazamientoPorTurno(personajes.get(k).getDesplazamientoPorTurno() - 1);
+                            cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(k).getX(), personajes.get(k).getY(), personajes.get(k));
+                            cuadradosGLogico[moverX][moverY].setBorder(BorderFactory.createLineBorder(Color.RED));
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Acción inválida. Cada personaje solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
+                        }
+                    }else {
+                        JOptionPane.showMessageDialog(null, "El Arquero ya no tiene movimientos restantes durante este turno.");
+                        arqueroSeleccionado = false;
                     }
                 }
             }
             else {
-                if (agenteSeleccionado){
-                    actualX = personajes.get(k).getX();
-                    actualY = personajes.get(k).getY();
-                    if (isValidMove(actualX, actualY, moverX, moverY)){
-                        cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = new Casilla(personajes.get(k).getX(),personajes.get(k).getY());
-                        personajes.get(k).setX(moverX);
-                        personajes.get(k).setY(moverY);
-                        cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(k).getX(),personajes.get(k).getY(), personajes.get(k));
-                        cuadradosGLogico[moverX][moverY].setBorder(BorderFactory.createLineBorder(Color.RED));
-                    }
-                    else {
-                        JOptionPane.showMessageDialog(null, "Acción inválida. Cada personaje solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
+                if (agenteSeleccionado) {
+                    if (personajes.get(k).getDesplazamientoPorTurno() > 0) {
+                        actualX = personajes.get(k).getX();
+                        actualY = personajes.get(k).getY();
+                        if (isValidMove(actualX, actualY, moverX, moverY)) {
+                            cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = new Casilla(personajes.get(k).getX(), personajes.get(k).getY());
+                            personajes.get(k).setX(moverX);
+                            personajes.get(k).setY(moverY);
+                            personajes.get(k).setDesplazamientoPorTurno(personajes.get(k).getDesplazamientoPorTurno() - 1);
+                            cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(k).getX(), personajes.get(k).getY(), personajes.get(k));
+                            cuadradosGLogico[moverX][moverY].setBorder(BorderFactory.createLineBorder(Color.RED));
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Acción inválida. Cada personaje solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
+                        }
+                    }else {
+                        JOptionPane.showMessageDialog(null, "El agente ya no tiene movimientos restantes durante este turno.");
+                        agenteSeleccionado = false;
                     }
                 }
             }
