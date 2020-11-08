@@ -4,17 +4,17 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class Zombie {
-    private int posicionLinea;
-    private int posicionColumna;
+    private int X;
+    private int Y;
     private ImageIcon dibujo;
     private int salud;
     private int ataque;
     private int rangoVision;
     private int rangoAtaque;
 
-    public Zombie(int posicionLinea, int posicionColumna, ImageIcon dibujo, int salud, int ataque, int rangoVision, int rangoAtaque) {
-        this.posicionLinea = posicionLinea;
-        this.posicionColumna = posicionColumna;
+    public Zombie(int X, int Y, ImageIcon dibujo, int salud, int ataque, int rangoVision, int rangoAtaque) {
+        this.X = X;
+        this.Y = Y;
         this.dibujo = dibujo;
         this.salud = salud;
         this.ataque = ataque;
@@ -47,20 +47,20 @@ public abstract class Zombie {
     }
     public abstract void recibirDano(int danoRecibido);
 
-    public int getPosicionLinea() {
-        return posicionLinea;
+    public int getX() {
+        return X;
     }
 
-    public void setPosicionLinea(int posicionLinea) {
-        this.posicionLinea = posicionLinea;
+    public void setX(int x) {
+        this.X = x;
     }
 
-    public int getPosicionColumna() {
-        return posicionColumna;
+    public int getY() {
+        return Y;
     }
 
-    public void setPosicionColumna(int posicionColumna) {
-        this.posicionColumna = posicionColumna;
+    public void setY(int y) {
+        this.Y = y;
     }
 
     public ImageIcon getDibujo() {

@@ -5,7 +5,7 @@ import java.awt.*;
 
 public class Casilla extends JButton {
     private int posX;
-    private int posY;// 0 no esta bloqueado, 1 base, 2 spawning point, 3  bloqueado, 4 personaje, 5 zombie
+    private int posY;
     private ImageIcon imagen;
     // En vez de estado vamos a usar herencia
 

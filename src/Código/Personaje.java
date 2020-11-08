@@ -4,8 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class Personaje {
-    private int posicionLinea;
-    private int posicionColumna;
+    private int X;
+    private int Y;
     private ImageIcon dibujo;
     private int salud;
     private int armadura;
@@ -18,9 +18,9 @@ public abstract class Personaje {
     //private int ID;
 
 
-    public Personaje(int posicionLinea, int posicionColumna, ImageIcon dibujo, int salud, int armadura, int experiencia, Arma arma, int ataquesPorTurno, int desplazamientoPorTurno) {
-        this.posicionLinea = posicionLinea;
-        this.posicionColumna = posicionColumna;
+    public Personaje(int X, int Y, ImageIcon dibujo, int salud, int armadura, int experiencia, Arma arma, int ataquesPorTurno, int desplazamientoPorTurno) {
+        this.X = X;
+        this.Y = Y;
         this.dibujo = dibujo;
         this.salud = salud;
         this.armadura = armadura;
@@ -119,20 +119,20 @@ public abstract class Personaje {
         this.rango = rango;
     }
 
-    public int getPosicionLinea() {
-        return posicionLinea;
+    public int getX() {
+        return X;
     }
 
-    public void setPosicionLinea(int posicionLinea) {
-        this.posicionLinea = posicionLinea;
+    public void setX(int x) {
+        this.X = x;
     }
 
-    public int getPosicionColumna() {
-        return posicionColumna;
+    public int getY() {
+        return Y;
     }
 
-    public void setPosicionColumna(int posicionColumna) {
-        this.posicionColumna = posicionColumna;
+    public void setY(int y) {
+        this.Y = y;
     }
 
     public ImageIcon getDibujo() {

@@ -10,7 +10,8 @@ public class Tablero extends JFrame {
 
     protected JButton botonTurno = new JButton("Terminar Turno");
 
-    private Casilla[][] cuadradosG = new Casilla[12][12];
+    private Casilla[][] cuadradosGLogico = new Casilla[12][12];
+    private JButton[][] botonesGraficos = new JButton[12][12];
     private JInternalFrame panelContenedor = new JInternalFrame();
 
     private ArrayList<Personaje> personajes = new ArrayList<Personaje>();
@@ -21,6 +22,9 @@ public class Tablero extends JFrame {
     private PanelStats statsPanel = new PanelStats();
 
     private int turno = 0;
+    private boolean guerreroSeleccionado = false;
+    private boolean arqueroSeleccionado = false;
+    private boolean agenteSeleccionado = false;
 
     public Tablero(){
         setSize( 1235, 726);
@@ -50,25 +54,26 @@ public class Tablero extends JFrame {
         for (int i = 0; i < 12; i++){
             for (int j = 0; j < 12; j++){
                 if (i==11 && j==0){
-                    cuadradosG[i][j] = new Base(i,j);
+                    cuadradosGLogico[i][j] = new Base(i,j);
                 }
                 else if (i==0 && j==11){
-                    cuadradosG[0][11] = new SpawningPoint(0,11);
+                    cuadradosGLogico[0][11] = new SpawningPoint(0,11);
                 }
                 else {
-                    cuadradosG[i][j] = new Casilla(i,j);
+                    cuadradosGLogico[i][j] = new Casilla(i,j);
                 }
-                panelContenedor.add(cuadradosG[i][j]);
-                cuadradosG[i][j].addActionListener(lableHandler);
+                botonesGraficos[i][j] = new JButton(cuadradosGLogico[i][j].getIcon());
+                panelContenedor.add(botonesGraficos[i][j]);
+                botonesGraficos[i][j].addActionListener(lableHandler);
             }
         }
         for (int i=0; i<personajes.size(); i++){
-            cuadradosG[personajes.get(i).getPosicionLinea()][personajes.get(i).getPosicionColumna()] = new JugadorCasilla(personajes.get(i).getPosicionLinea(),personajes.get(i).getPosicionColumna(), personajes.get(i));
+            cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(i).getX(),personajes.get(i).getY(), personajes.get(i));
         }
         panelContenedor.setVisible(true);
         panelContenedor.setClosable(false);
 
-        panelContenedor = ActualizarTablero();
+        ActualizarTablero();
         statsPanel.actualizarPaneles();
 
         add(panelContenedor);
@@ -78,38 +83,147 @@ public class Tablero extends JFrame {
     private void turnoJugador(){
 
     }
-    private JInternalFrame ActualizarTablero(){
-        JInternalFrame tab = new JInternalFrame();
-        tab.setLayout(new GridLayout(12,12));
-        tab.setBounds(300, -30, 924, 726);
-        tab.setResizable(false);
-        tab.setVisible(true);
+    private void ActualizarTablero(){
         for (int i=0;i<12;i++){
             for (int j=0;j<12;j++){
-                tab.add(cuadradosG[i][j]);
-                cuadradosG[i][j].addActionListener(lableHandler);
+                botonesGraficos[i][j].setIcon(cuadradosGLogico[i][j].getIcon());
+                botonesGraficos[i][j].setBorder(cuadradosGLogico[i][j].getBorder());
             }
         }
-        return tab;
     }
     private class LableHandler  implements ActionListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
             Object botonPresionado = e.getSource();
-            for (int i=0; i<12; i++){
-                for (int j=0;j<12;j++){
-                    if (botonPresionado==cuadradosG[i][j]){
-                        cuadradosG[i][j].setBorder(BorderFactory.createLineBorder(Color.RED));
-                        cuadradosG[i][j].setSelected(true);
-                        if (botonPresionado instanceof JugadorCasilla)
-                            for (int k=0;k<personajes.size();k++){
-                                if (i==personajes.get(k).getPosicionLinea() && j==personajes.get(k).getPosicionColumna()){
-
-                                }
-                            }
+            for (int i = 0; i < 12; i++) {
+                for (int j = 0; j < 12; j++) {
+                    if (botonPresionado == botonesGraficos[i][j]) {
+                        if (cuadradosGLogico[i][j] instanceof JugadorCasilla) {
+                            seleccionarPersonaje(i,j);
+                        }
+                        else if (cuadradosGLogico[i][j] instanceof ZombieCasilla){
+                            //atacarZombie();
+                        }
+                        else if (cuadradosGLogico[i][j] instanceof Base){
+                            //moverABase();
+                        }
+                        else if (cuadradosGLogico[i][j] instanceof SpawningPoint){
+                            //SpawPSelect();
+                        }
+                        else if (cuadradosGLogico[i][j] instanceof ItemCasilla){
+                            //moverAItemCasilla();
+                        }
+                        else if (cuadradosGLogico[i][j] instanceof Montaña || cuadradosGLogico[i][j] instanceof Escombro){
+                            //moverAObstaculo();
+                        }
+                        else if (agenteSeleccionado || guerreroSeleccionado || arqueroSeleccionado){
+                            moverPersonaje(i,j);
+                        }
+                        else {
+                            JOptionPane.showMessageDialog(null, "Debe seleccionar un personaje para poder realizar una acción.");
+                        }
+                    }
+                    else {
+                        if (cuadradosGLogico[i][j] instanceof JugadorCasilla){
+                            if (botonPresionado != botonesGraficos[i][j])
+                                cuadradosGLogico[i][j].setBorder(UIManager.getBorder("Button.border"));
+                        }else
+                            cuadradosGLogico[i][j].setBorder(UIManager.getBorder("Button.border"));
                     }
                 }
+            }
+            statsPanel.actualizarPaneles();
+            ActualizarTablero();
+        }
+    }
+    private void seleccionarPersonaje(int i, int j){
+        if (((JugadorCasilla) cuadradosGLogico[i][j]).getPersonaje() instanceof Guerrero) {
+            cuadradosGLogico[i][j].setBorder(BorderFactory.createLineBorder(Color.RED));
+            agenteSeleccionado = false;
+            guerreroSeleccionado = true;
+            arqueroSeleccionado = false;
+        } else if (((JugadorCasilla) cuadradosGLogico[i][j]).getPersonaje() instanceof Arquero) {
+            cuadradosGLogico[i][j].setBorder(BorderFactory.createLineBorder(Color.RED));
+            agenteSeleccionado = false;
+            guerreroSeleccionado = false;
+            arqueroSeleccionado = true;
+        } else {
+            cuadradosGLogico[i][j].setBorder(BorderFactory.createLineBorder(Color.RED));
+            agenteSeleccionado = true;
+            guerreroSeleccionado = false;
+            arqueroSeleccionado = false;
+        }
+    }
+    private void moverPersonaje(int moverX, int moverY){
+        int actualX;
+        int actualY;
+        for (int k=0;k<personajes.size();k++){
+            if (personajes.get(k) instanceof Guerrero){
+                if (guerreroSeleccionado){
+                    actualX = personajes.get(k).getX();
+                    actualY = personajes.get(k).getY();
+                    if (isValidMove(actualX, actualY, moverX, moverY)){
+                        cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = new Casilla(personajes.get(k).getX(),personajes.get(k).getY());
+                        personajes.get(k).setX(moverX);
+                        personajes.get(k).setY(moverY);
+                        cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(k).getX(),personajes.get(k).getY(), personajes.get(k));
+                        cuadradosGLogico[moverX][moverY].setBorder(BorderFactory.createLineBorder(Color.RED));
+                    }
+                    else {
+                        JOptionPane.showMessageDialog(null, "Acción inválida. Cada personaje solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
+                    }
+                }
+            }
+            else if (personajes.get(k) instanceof Arquero){
+                if (arqueroSeleccionado){
+                    actualX = personajes.get(k).getX();
+                    actualY = personajes.get(k).getY();
+                    if (isValidMove(actualX, actualY, moverX, moverY)){
+                        cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = new Casilla(personajes.get(k).getX(),personajes.get(k).getY());
+                        personajes.get(k).setX(moverX);
+                        personajes.get(k).setY(moverY);
+                        cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(k).getX(),personajes.get(k).getY(), personajes.get(k));
+                        cuadradosGLogico[moverX][moverY].setBorder(BorderFactory.createLineBorder(Color.RED));
+                    }
+                    else {
+                        JOptionPane.showMessageDialog(null, "Acción inválida. Cada personaje solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
+                    }
+                }
+            }
+            else {
+                if (agenteSeleccionado){
+                    actualX = personajes.get(k).getX();
+                    actualY = personajes.get(k).getY();
+                    if (isValidMove(actualX, actualY, moverX, moverY)){
+                        cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = new Casilla(personajes.get(k).getX(),personajes.get(k).getY());
+                        personajes.get(k).setX(moverX);
+                        personajes.get(k).setY(moverY);
+                        cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(k).getX(),personajes.get(k).getY(), personajes.get(k));
+                        cuadradosGLogico[moverX][moverY].setBorder(BorderFactory.createLineBorder(Color.RED));
+                    }
+                    else {
+                        JOptionPane.showMessageDialog(null, "Acción inválida. Cada personaje solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
+                    }
+                }
+            }
+        }
+    }
+    private boolean isValidMove(int actualX,int actualY,int moverX,int moverY){
+        int difX = Math.abs(actualX-moverX);
+        int difY = Math.abs(actualY-moverY);
+        if (difX <= 1 && difY <= 1){
+            return true;
+        }
+        return false;
+    }
+    private class TurnoListener implements ActionListener{
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            Object botonPres = e.getSource();
+            if (botonPres == botonTurno){
+                botonTurno.setEnabled(false);
+                System.out.println("Presionado");
             }
         }
     }
@@ -208,20 +322,9 @@ public class Tablero extends JFrame {
                     saludAgente.setText("Salud del agente: "+personajes.get(i).getSalud());
                     ataqueAgente.setText("Ataque del agente: "+personajes.get(i).getArma().getDano());
                     nivelAgente.setText("Nivel del agente: "+personajes.get(i).getNivel());
-                }
-            }
-        }
-
-    }
-    private class TurnoListener implements ActionListener{
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            Object botonPres = e.getSource();
-            if (botonPres == botonTurno){
-                botonTurno.setEnabled(false);
-                System.out.println("Presionado");
+                    }
             }
         }
     }
-
 }
+
