@@ -15,6 +15,7 @@ public class Tablero extends JFrame {
     private JInternalFrame panelContenedor = new JInternalFrame();
 
     private ArrayList<Personaje> personajes = new ArrayList<Personaje>();
+    private ArrayList<Item> items = new ArrayList<Item>();
     private ArrayList<Zombie> zombies = new ArrayList<Zombie>();
     private ArrayList<SpawningPoint> spawningPoints = new ArrayList<SpawningPoint>();
 
@@ -25,6 +26,9 @@ public class Tablero extends JFrame {
     private boolean guerreroSeleccionado = false;
     private boolean arqueroSeleccionado = false;
     private boolean agenteSeleccionado = false;
+    private boolean arqueroEncaramado = false;
+    private boolean obstaculoEnMedio = false;
+    private Casilla respaldoCasilla;
 
     public Tablero(){
         setSize( 1235, 726);
@@ -35,7 +39,6 @@ public class Tablero extends JFrame {
         //setLayout(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("Zombie Defense");
-
 
         panelContenedor.setLayout(new GridLayout(12,12));
         panelContenedor.setBounds(300, -30, 925, 726);
@@ -130,7 +133,7 @@ public class Tablero extends JFrame {
         personajes.add(arquero);
         personajes.add(agente);
         for (int i=0; i<personajes.size(); i++){
-            cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(i).getX(),personajes.get(i).getY(), personajes.get(i));
+            cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = new JugadorCasilla(personajes.get(i).getX(),personajes.get(i).getY(), personajes.get(i));
         }
     }
     private class LableHandler  implements ActionListener {
@@ -145,19 +148,20 @@ public class Tablero extends JFrame {
                             seleccionarPersonaje(i,j);
                         }
                         else if (cuadradosGLogico[i][j] instanceof ZombieCasilla){
-                            //atacarZombie();
+                            atacarZombie(i,j);
                         }
                         else if (cuadradosGLogico[i][j] instanceof Base){
-                            //moverABase();
+                            if (agenteSeleccionado || guerreroSeleccionado || arqueroSeleccionado)
+                                JOptionPane.showMessageDialog(null,"Un personaje no se puede mover a la Base.");
                         }
                         else if (cuadradosGLogico[i][j] instanceof SpawningPoint){
-                            //SpawPSelect();
+                            SpawPSelect(i,j);
                         }
                         else if (cuadradosGLogico[i][j] instanceof ItemCasilla){
-                            //moverAItemCasilla();
+                            moverAItemCasilla(i,j);
                         }
                         else if (cuadradosGLogico[i][j] instanceof Montaña || cuadradosGLogico[i][j] instanceof Escombro){
-                            //moverAObstaculo();
+                            moverAObstaculo(i,j);
                         }
                         else if (agenteSeleccionado || guerreroSeleccionado || arqueroSeleccionado){
                             moverPersonaje(i,j);
@@ -177,6 +181,312 @@ public class Tablero extends JFrame {
             }
             statsPanel.actualizarPaneles();
             ActualizarTablero();
+        }
+    }
+    private void moverAItemCasilla(int posItemX,int posItemY){
+        int actualX;
+        int actualY;
+        Item item = ((ItemCasilla) cuadradosGLogico[posItemX][posItemY]).getItem();
+        if (arqueroSeleccionado||guerreroSeleccionado||agenteSeleccionado){
+            for (int i=0;i<personajes.size();i++){
+                if (guerreroSeleccionado){
+                    if (personajes.get(i) instanceof Guerrero){
+                        if (personajes.get(i).getDesplazamientoPorTurno()>0){
+                            actualX = personajes.get(i).getX();
+                            actualY = personajes.get(i).getY();
+                            if (isValidMove(actualX, actualY, posItemX, posItemY)){
+                                if (item instanceof Bebida){
+                                    personajes.get(i).setSalud(personajes.get(i).getSalud()+((Bebida) item).getMasSalud());
+                                }
+                                else if (item instanceof Insignia){
+                                    personajes.get(i).setExperiencia(personajes.get(i).getExperiencia()+((Insignia) item).getMasExperiencia());
+                                }
+                                else {
+                                    personajes.get(i).setDesplazamientoPorTurno(personajes.get(i).getDesplazamientoPorTurno()+1);
+                                    personajes.get(i).setAtaquesPorTurno(personajes.get(i).getAtaquesPorTurno()+1);
+                                }
+                                cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = new Casilla(personajes.get(i).getX(), personajes.get(i).getY());
+                                personajes.get(i).setX(posItemX);
+                                personajes.get(i).setY(posItemY);
+                                personajes.get(i).setDesplazamientoPorTurno(personajes.get(i).getDesplazamientoPorTurno()-1);
+                                cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = new JugadorCasilla(personajes.get(i).getX(), personajes.get(i).getY(), personajes.get(i));
+                                cuadradosGLogico[posItemX][posItemY].setBorder(BorderFactory.createLineBorder(Color.RED));
+                            } else {
+                                JOptionPane.showMessageDialog(null, "Acción inválida. Cada personaje solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
+                            }
+                        }
+                        else {
+                            JOptionPane.showMessageDialog(null, "El guerrero ya no tiene movimientos restantes durante este turno.");
+                            guerreroSeleccionado = false;
+                        }
+                    }
+                }
+                else if (arqueroSeleccionado) {
+                    if (personajes.get(i) instanceof Arquero) {
+                        if (personajes.get(i).getDesplazamientoPorTurno()>0){
+                            actualX = personajes.get(i).getX();
+                            actualY = personajes.get(i).getY();
+                            if (isValidMove(actualX, actualY, posItemX, posItemY)){
+                                if (item instanceof Bebida){
+                                    personajes.get(i).setSalud(personajes.get(i).getSalud()+((Bebida) item).getMasSalud());
+                                }
+                                else if (item instanceof Insignia){
+                                    personajes.get(i).setExperiencia(personajes.get(i).getExperiencia()+((Insignia) item).getMasExperiencia());
+                                }
+                                else {
+                                    personajes.get(i).setDesplazamientoPorTurno(personajes.get(i).getDesplazamientoPorTurno()+1);
+                                    personajes.get(i).setAtaquesPorTurno(personajes.get(i).getAtaquesPorTurno()+1);
+                                }
+                                if (arqueroEncaramado){
+                                    cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = respaldoCasilla;
+                                    personajes.get(i).setX(posItemX);
+                                    personajes.get(i).setY(posItemY);
+                                    arqueroEncaramado = false;
+                                    respaldoCasilla = null;
+                                }
+                                else {
+                                    cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = new Casilla(personajes.get(i).getX(), personajes.get(i).getY());
+                                    personajes.get(i).setX(posItemX);
+                                    personajes.get(i).setY(posItemY);
+                                }
+                                cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(i).getX(), personajes.get(i).getY(), personajes.get(i));
+                                personajes.get(i).setDesplazamientoPorTurno(personajes.get(i).getDesplazamientoPorTurno() - 1);
+                                cuadradosGLogico[posItemX][posItemY].setBorder(BorderFactory.createLineBorder(Color.RED));
+                            } else {
+                                JOptionPane.showMessageDialog(null, "Acción inválida. Cada personaje solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
+                            }
+                        }
+                        else {
+                            JOptionPane.showMessageDialog(null, "El Arquero ya no tiene movimientos restantes durante este turno.");
+                            arqueroSeleccionado = false;
+                        }
+                    }
+                }
+                else {
+                    if (personajes.get(i) instanceof Agente) {
+                        if (personajes.get(i).getDesplazamientoPorTurno()>0){
+                            actualX = personajes.get(i).getX();
+                            actualY = personajes.get(i).getY();
+                            if (isValidMove(actualX, actualY, posItemX, posItemY)){
+                                if (item instanceof Bebida){
+                                    personajes.get(i).setSalud(personajes.get(i).getSalud()+((Bebida) item).getMasSalud());
+                                }
+                                else if (item instanceof Insignia){
+                                    personajes.get(i).setExperiencia(personajes.get(i).getExperiencia()+((Insignia) item).getMasExperiencia());
+                                }
+                                else {
+                                    personajes.get(i).setDesplazamientoPorTurno(personajes.get(i).getDesplazamientoPorTurno()+1);
+                                    personajes.get(i).setAtaquesPorTurno(personajes.get(i).getAtaquesPorTurno()+1);
+                                }
+                                cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = new Casilla(personajes.get(i).getX(), personajes.get(i).getY());
+                                personajes.get(i).setX(posItemX);
+                                personajes.get(i).setY(posItemY);
+                                personajes.get(i).setDesplazamientoPorTurno(personajes.get(i).getDesplazamientoPorTurno()-1);
+                                cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = new JugadorCasilla(personajes.get(i).getX(), personajes.get(i).getY(), personajes.get(i));
+                                cuadradosGLogico[posItemX][posItemY].setBorder(BorderFactory.createLineBorder(Color.RED));
+                            } else {
+                                JOptionPane.showMessageDialog(null, "Acción inválida. Cada personaje solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
+                            }
+                        }
+                        else {
+                            JOptionPane.showMessageDialog(null, "El Agente ya no tiene movimientos restantes durante este turno.");
+                            agenteSeleccionado = false;
+                        }
+                    }
+                }
+            }
+        }
+        else
+            JOptionPane.showMessageDialog(null,"Seleccione a un personaje amistoso para recoger el item.");
+    }
+    private boolean isvalidAttack(int actualX,int actualY,int atacarX,int atacarY, int rango){
+        int distanica;
+        if (Math.abs(actualX-atacarX) <= rango && actualY==atacarY){
+            distanica = Math.abs(actualX-atacarX);
+            for (int i=1;i<distanica;i++){
+                if (cuadradosGLogico[actualX+i][actualY] instanceof Montaña || cuadradosGLogico[actualX+i][actualY] instanceof Escombro || cuadradosGLogico[actualX+i][actualY] instanceof SpawningPoint) {
+                    obstaculoEnMedio = true;
+                    return false;
+                }
+            }
+            return true;
+        }
+        else if (Math.abs(actualY-atacarY) <= rango && actualX==atacarX){
+            distanica = Math.abs(actualY-atacarY);
+            for (int i=1;i<distanica;i++){
+                if (cuadradosGLogico[actualX][actualY+i] instanceof Montaña || cuadradosGLogico[actualX][actualY+i] instanceof Escombro || cuadradosGLogico[actualX][actualY+i] instanceof SpawningPoint) {
+                    obstaculoEnMedio = true;
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+    private void atacarZombie(int atacarX, int atacarY){
+        int actualX;
+        int actualY;
+        if (arqueroSeleccionado||guerreroSeleccionado||agenteSeleccionado){
+            for (int i=0;i<personajes.size();i++){
+                if (guerreroSeleccionado){
+                    if (personajes.get(i) instanceof Guerrero){
+                        if (personajes.get(i).getAtaquesPorTurno()>0){
+                            actualX = personajes.get(i).getX();
+                            actualY = personajes.get(i).getY();
+                            if (isvalidAttack(actualX, actualY, atacarX, atacarY, personajes.get(i).getArma().getRango())){
+                                //SIGUE REALIZAR LOS ATAQUES
+                                for (int z=0;z<zombies.size();z++){
+                                    if (zombies.get(z).getX()==atacarX && zombies.get(z).getY() == atacarY){
+                                        zombies.get(z).recibirDano(personajes.get(i).getArma().getDano());
+                                        if (zombies.get(z).getSalud()<=0){
+                                            cuadradosGLogico[atacarX][atacarY] = new Casilla(atacarX, atacarY);
+                                            zombies.remove(z);
+                                            statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie y lo ha eliminado.\n");
+                                        }
+                                        else {
+                                            statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie.\n");
+                                        }
+                                        //zombies.get(z).getSalud()personajes.get(i).getArma().getDano();
+                                    }
+                                }
+                            }
+                            else if (obstaculoEnMedio){
+                                JOptionPane.showMessageDialog(null, "Hay un obstaculo que impide realizar el ataque.");
+                                obstaculoEnMedio=false;
+                            }
+                            else {
+                                JOptionPane.showMessageDialog(null,"El zombie se encuentra muy lejos para ser atacado por el Guerrrero.");
+                            }
+                        }
+                        else
+                            JOptionPane.showMessageDialog(null, "El Guerrero ya no tiene ataques este turno.");
+                    }
+                }
+                else if (arqueroSeleccionado){
+                    if (personajes.get(i) instanceof Arquero){
+                        if (personajes.get(i).getAtaquesPorTurno()>0){
+                            actualX = personajes.get(i).getX();
+                            actualY = personajes.get(i).getY();
+                            if (isvalidAttack(actualX, actualY, atacarX, atacarY, personajes.get(i).getArma().getRango())){
+
+                            }
+                            else if (obstaculoEnMedio){
+                                JOptionPane.showMessageDialog(null, "Hay un obstaculo que impide realizar el ataque.");
+                                obstaculoEnMedio=false;
+                            }
+                            else {
+                                JOptionPane.showMessageDialog(null,"El zombie se encuentra muy lejos para ser atacado por el Arquero.");
+                            }
+                        }
+                        else
+                            JOptionPane.showMessageDialog(null, "El Arquero ya no tiene ataques este turno.");
+                    }
+                }
+                else {
+                    if (personajes.get(i) instanceof Agente){
+                        if (personajes.get(i).getAtaquesPorTurno()>0){
+                            actualX = personajes.get(i).getX();
+                            actualY = personajes.get(i).getY();
+                            if (isvalidAttack(actualX, actualY, atacarX, atacarY, personajes.get(i).getArma().getRango())){
+
+                            }
+                            else if (obstaculoEnMedio){
+                                JOptionPane.showMessageDialog(null, "Hay un obstaculo que impide realizar el ataque.");
+                                obstaculoEnMedio=false;
+                            }
+                            else
+                                JOptionPane.showMessageDialog(null,"El zombie se encuentra muy lejos para ser atacado por el Agente.");
+                        }
+                        else
+                            JOptionPane.showMessageDialog(null, "El Agente ya no tiene ataques este turno.");
+                    }
+                }
+            }
+        }
+        else
+            JOptionPane.showMessageDialog(null,"Seleccione a un personaje amistoso para atacar a un zombie.");
+    }
+    private void SpawPSelect(int moverX, int moverY){
+        int actualX;
+        int actualY;
+        if (agenteSeleccionado || guerreroSeleccionado || arqueroSeleccionado){
+            for (int k=0;k<personajes.size();k++){
+                if (agenteSeleccionado){
+                    if (personajes.get(k) instanceof Agente){
+                        actualX = personajes.get(k).getX();
+                        actualY = personajes.get(k).getY();
+                        if (isValidMove(actualX, actualY, moverX, moverY)){
+                            JOptionPane.showMessageDialog(null, "El Agente no puede moverse ni atacar un Spawning Point.");
+                        }
+                    }
+                }
+                else if (guerreroSeleccionado){
+                    if (personajes.get(k) instanceof Guerrero){
+                        actualX = personajes.get(k).getX();
+                        actualY = personajes.get(k).getY();
+                        if (isValidMove(actualX, actualY, moverX, moverY)){
+                            JOptionPane.showMessageDialog(null, "El Guerrero no puede moverse ni atacar un Spawning Point.");
+                        }
+                    }
+                }
+                else {
+                    if (personajes.get(k) instanceof Arquero){
+                        actualX = personajes.get(k).getX();
+                        actualY = personajes.get(k).getY();
+                        if (isValidMove(actualX, actualY, moverX, moverY)){
+                            JOptionPane.showMessageDialog(null, "El Arquero no puede moverse ni atacar un Spawning Point.");
+                        }
+                    }
+                }
+            }
+        }
+    }
+    private void moverAObstaculo(int moverX, int moverY){
+        int actualX;
+        int actualY;
+        if (guerreroSeleccionado || agenteSeleccionado){
+            JOptionPane.showMessageDialog(null, "Solamente el arquero puede escalar montañas.");
+        }
+        else {
+            for (int k = 0; k < personajes.size(); k++) {
+                if (personajes.get(k) instanceof Arquero) {
+                    if (arqueroSeleccionado){
+                        if (personajes.get(k).getDesplazamientoPorTurno()>0) {
+                            actualX = personajes.get(k).getX();
+                            actualY = personajes.get(k).getY();
+                            if (isValidMove(actualX, actualY, moverX, moverY)) {
+                                if (((Arquero) personajes.get(k)).isSubirObstaculos()) {
+                                    if (!arqueroEncaramado) {
+                                        cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = new Casilla(personajes.get(k).getX(), personajes.get(k).getY());
+                                        personajes.get(k).setX(moverX);
+                                        personajes.get(k).setY(moverY);
+                                        personajes.get(k).setDesplazamientoPorTurno(personajes.get(k).getDesplazamientoPorTurno() - 1);
+                                        respaldoCasilla = cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()];
+                                        cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(k).getX(), personajes.get(k).getY(), personajes.get(k));
+                                        cuadradosGLogico[moverX][moverY].setBorder(BorderFactory.createLineBorder(Color.RED));
+                                        arqueroEncaramado = true;
+                                    }
+                                    else {
+                                        JOptionPane.showMessageDialog(null,"El Arquero no puede pasar de obstáculo a obstáculo directamente.");
+                                    }
+                                } else {
+                                    JOptionPane.showMessageDialog(null, "El Arquero aún no posee la habilidad de escalar obstáculos.");
+                                }
+                            }
+                            else {
+                                JOptionPane.showMessageDialog(null, "Acción inválida. El Arquero solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
+                            }
+                        }
+                        else {
+                            JOptionPane.showMessageDialog(null, "El Arquero ya no tiene movimientos restantes durante este turno.");
+                            arqueroSeleccionado = false;
+                        }
+                    }
+                    else {
+                        JOptionPane.showMessageDialog(null,"Debe seleccionar un personaje para realizar una acción.");
+                    }
+                }
+            }
         }
     }
     private void seleccionarPersonaje(int i, int j){
@@ -211,7 +521,7 @@ public class Tablero extends JFrame {
                             personajes.get(k).setX(moverX);
                             personajes.get(k).setY(moverY);
                             personajes.get(k).setDesplazamientoPorTurno(personajes.get(k).getDesplazamientoPorTurno()-1);
-                            cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(k).getX(), personajes.get(k).getY(), personajes.get(k));
+                            cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = new JugadorCasilla(personajes.get(k).getX(), personajes.get(k).getY(), personajes.get(k));
                             cuadradosGLogico[moverX][moverY].setBorder(BorderFactory.createLineBorder(Color.RED));
                         } else {
                             JOptionPane.showMessageDialog(null, "Acción inválida. Cada personaje solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
@@ -229,16 +539,27 @@ public class Tablero extends JFrame {
                         actualX = personajes.get(k).getX();
                         actualY = personajes.get(k).getY();
                         if (isValidMove(actualX, actualY, moverX, moverY)) {
-                            cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = new Casilla(personajes.get(k).getX(), personajes.get(k).getY());
-                            personajes.get(k).setX(moverX);
-                            personajes.get(k).setY(moverY);
-                            personajes.get(k).setDesplazamientoPorTurno(personajes.get(k).getDesplazamientoPorTurno() - 1);
+                            if (arqueroEncaramado){
+                                cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = respaldoCasilla;
+                                personajes.get(k).setX(moverX);
+                                personajes.get(k).setY(moverY);
+                                arqueroEncaramado = false;
+                                respaldoCasilla = null;
+                            }
+                            else {
+                                cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = new Casilla(personajes.get(k).getX(), personajes.get(k).getY());
+                                personajes.get(k).setX(moverX);
+                                personajes.get(k).setY(moverY);
+                            }
                             cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(k).getX(), personajes.get(k).getY(), personajes.get(k));
+                            personajes.get(k).setDesplazamientoPorTurno(personajes.get(k).getDesplazamientoPorTurno() - 1);
                             cuadradosGLogico[moverX][moverY].setBorder(BorderFactory.createLineBorder(Color.RED));
-                        } else {
+                        }
+                        else {
                             JOptionPane.showMessageDialog(null, "Acción inválida. Cada personaje solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
                         }
-                    }else {
+                    }
+                    else {
                         JOptionPane.showMessageDialog(null, "El Arquero ya no tiene movimientos restantes durante este turno.");
                         arqueroSeleccionado = false;
                     }
@@ -296,7 +617,7 @@ public class Tablero extends JFrame {
         private JLabel nivelArquero = new JLabel("Arquero: ");
         private JLabel nivelAgente = new JLabel("Agente: ");
 
-        private JTextArea resultadosLabel = new JTextArea();
+        private JTextArea registroResultados = new JTextArea();
         private JScrollPane scrollResultado = new JScrollPane();
         private TurnoListener turnoListener = new TurnoListener();
         public PanelStats() {
@@ -341,10 +662,10 @@ public class Tablero extends JFrame {
             //resultadosLabel.setBounds(10, 350,280, 325);
             scrollResultado.setBounds(10, 350,280, 325);
             scrollResultado.getViewport().setBackground(Color.lightGray);
-            scrollResultado.getViewport().add(resultadosLabel);
-            resultadosLabel.setVisible(true);
-            resultadosLabel.setEditable(false);
-            resultadosLabel.setFont(new Font("HelveticaNeue-Bold", 10,12));
+            scrollResultado.getViewport().add(registroResultados);
+            registroResultados.setVisible(true);
+            registroResultados.setEditable(false);
+            registroResultados.setFont(new Font("HelveticaNeue-Bold", 10,12));
 
             botonTurno.setBackground(new Color(116, 14, 6));
             botonTurno.setForeground(new Color(253, 120, 48));

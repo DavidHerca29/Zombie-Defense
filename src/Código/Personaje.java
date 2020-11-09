@@ -11,10 +11,10 @@ public abstract class Personaje {
     private int armadura;
     private int experiencia;
     private int nivel;
-    private int rango;
     private Arma arma;
     private int ataquesPorTurno;
     private int desplazamientoPorTurno;
+    private int ruidoActivo = 0;
     //private int ID;
 
 
@@ -29,6 +29,14 @@ public abstract class Personaje {
         this.arma = arma;
         this.desplazamientoPorTurno = desplazamientoPorTurno;
         this.ataquesPorTurno = ataquesPorTurno;
+    }
+
+    public int getRuidoActivo() {
+        return ruidoActivo;
+    }
+
+    public void setRuidoActivo(int ruidoActivo) {
+        this.ruidoActivo = ruidoActivo;
     }
 
     public int getAtaquesPorTurno() {
@@ -109,14 +117,6 @@ public abstract class Personaje {
     public void RecibirDano(int danoRecibido){
         danoRecibido = danoRecibido*this.armadura/100;
         this.setSalud(this.getSalud()-danoRecibido);
-    }
-
-    public int getRango() {
-        return rango;
-    }
-
-    public void setRango(int rango) {
-        this.rango = rango;
     }
 
     public int getX() {
