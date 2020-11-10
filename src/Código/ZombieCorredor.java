@@ -4,7 +4,7 @@ import javax.swing.*;
 
 public class ZombieCorredor extends Zombie{
     public ZombieCorredor(int posicionLinea, int posicionColumna) {
-        super(posicionLinea, posicionColumna, new ImageIcon("stc/Imagenes/Corredor.jpg"), 100, 50, 7, 2);
+        super(posicionLinea, posicionColumna, new ImageIcon("src/Imagenes/Corredor.jpg"), 100, 50, 7, 2);
         this.setDibujo(scaleImage(getDibujo(),50,50));
     }
     @Override

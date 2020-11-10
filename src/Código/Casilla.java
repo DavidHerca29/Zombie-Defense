@@ -109,7 +109,7 @@ class ZombieCasilla extends Casilla{
         super(posX, posY);
         this.zombie = zombie;
         this.setImagen(zombie.getDibujo());
-        this.setIcon(zombie.getDibujo());
+        this.setIcon(getImagen());
     }
 
     public Zombie getZombie() {

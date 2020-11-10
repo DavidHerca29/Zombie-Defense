@@ -61,7 +61,195 @@ public class Tablero extends JFrame {
         turnoJugador();
     }
     private void turnoJugador(){
-
+        activarSpawningP();
+    }
+    private int validarPosSpawn(int posSpawnX,int posSpawnY){
+        // 1 superior izquierda. 2 superior derecha. 3 inferior izquierda. 4 inferior derecha. 5 borde superior, 6 borde inferior, 7 borde izquierdo, 8 borde derecho, 9 centro.
+        if (posSpawnX==0 && posSpawnY==0)
+            return 1;
+        else if (posSpawnX==0 && posSpawnY==11)
+            return 2;
+        else if (posSpawnX==11 && posSpawnY==0)
+            return 3;
+        else if (posSpawnX==11 && posSpawnY==11)
+            return 4;
+        else if (posSpawnX==0 && posSpawnY<11 && posSpawnY >0)
+            return 5;
+        else if (posSpawnX==11 && posSpawnY<11 && posSpawnY >0)
+            return 6;
+        else if (posSpawnY==0 && posSpawnX<11 && posSpawnX >0)
+            return 7;
+        else if (posSpawnY==11 && posSpawnX<11 && posSpawnX >0)
+            return 8;
+        else
+            return 9;
+    }
+    private boolean validarCasillaHab(int posX, int posY){
+        if (cuadradosGLogico[posX][posY] instanceof JugadorCasilla || cuadradosGLogico[posX][posY] instanceof ZombieCasilla || cuadradosGLogico[posX][posY] instanceof ItemCasilla ||cuadradosGLogico[posX][posY] instanceof SpawningPoint || cuadradosGLogico[posX][posY] instanceof Base || cuadradosGLogico[posX][posY] instanceof Montaña || cuadradosGLogico[posX][posY] instanceof Escombro){
+            return false;
+        }
+        else
+            return true;
+    }
+    private Zombie spawnZombieAleatorio(int posZomX, int posZomY){
+        int numRandom = (int) Math.floor(Math.random() * (100));
+        if (numRandom%3==0)
+            return new ZombieBasico(posZomX, posZomY);
+        else if (numRandom%3==1)
+            return new ZombieCorredor(posZomX, posZomY);
+        else
+            return new ZombieSamurai(posZomX, posZomY);
+    }
+    private void  actualizarZombies(){
+        for (int z=0;z<zombies.size();z++){
+            cuadradosGLogico[zombies.get(z).getPosX()][zombies.get(z).getPosY()] = new ZombieCasilla(zombies.get(z).getPosX(), zombies.get(z).getPosY(), zombies.get(z));
+        }
+        ActualizarTablero();
+    }
+    private void activarSpawningP(){
+        int posSpawnX;
+        int numOpcion;
+        int posSpawnY;
+        //Zombie zombieNuevo;
+        for (int s=0;s<spawningPoints.size();s++) {
+            posSpawnX = spawningPoints.get(s).getPosX();
+            posSpawnY = spawningPoints.get(s).getPosY();
+            if (isSpawining()) {
+                numOpcion = validarPosSpawn(posSpawnX, posSpawnY);
+                // 1 superior izquierda. 2 superior derecha. 3 inferior izquierda. 4 inferior derecha. 5 borde superior, 6 borde inferior, 7 borde izquierdo, 8 borde derecho, 9 centro.
+                switch (numOpcion){
+                    case 1:
+                        if (validarCasillaHab(posSpawnX, posSpawnY+1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY+1));
+                        else if (validarCasillaHab(posSpawnX+1, posSpawnY+1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY+1));
+                        else if (validarCasillaHab(posSpawnX+1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY));
+                        else
+                            break;
+                        actualizarZombies();
+                        break;
+                    case 2:
+                        if (validarCasillaHab(posSpawnX, posSpawnY-1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY-1));
+                        else if (validarCasillaHab(posSpawnX+1, posSpawnY-1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY-1));
+                        else if (validarCasillaHab(posSpawnX+1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY));
+                        else
+                            break;
+                        actualizarZombies();
+                        break;
+                    case 3:
+                        if (validarCasillaHab(posSpawnX-1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY));
+                        else if (validarCasillaHab(posSpawnX-1, posSpawnY+1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY+1));
+                        else if (validarCasillaHab(posSpawnX, posSpawnY+1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY+1));
+                        else
+                            break;
+                        actualizarZombies();
+                        break;
+                    case 4:
+                        if (validarCasillaHab(posSpawnX-1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY));
+                        else if (validarCasillaHab(posSpawnX-1, posSpawnY-1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY-1));
+                        else if (validarCasillaHab(posSpawnX, posSpawnY-1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY-1));
+                        else
+                            break;
+                        actualizarZombies();
+                        break;
+                    case 5:
+                        if (validarCasillaHab(posSpawnX, posSpawnY-1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY-1));
+                        else if (validarCasillaHab(posSpawnX+1, posSpawnY-1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY-1));
+                        else if (validarCasillaHab(posSpawnX+1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY));
+                        else if (validarCasillaHab(posSpawnX+1, posSpawnY+1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY+1));
+                        else if (validarCasillaHab(posSpawnX, posSpawnY+1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY+1));
+                        else
+                            break;
+                        actualizarZombies();
+                        break;
+                    case 6:
+                        if (validarCasillaHab(posSpawnX, posSpawnY-1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY-1));
+                        else if (validarCasillaHab(posSpawnX-1, posSpawnY-1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY-1));
+                        else if (validarCasillaHab(posSpawnX-1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY));
+                        else if (validarCasillaHab(posSpawnX-1, posSpawnY+1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY+1));
+                        else if (validarCasillaHab(posSpawnX, posSpawnY+1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY+1));
+                        else
+                            break;
+                        actualizarZombies();
+                        break;
+                    case 7:
+                        if (validarCasillaHab(posSpawnX+1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY));
+                        else if (validarCasillaHab(posSpawnX+1, posSpawnY+1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY+1));
+                        else if (validarCasillaHab(posSpawnX, posSpawnY+1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY+1));
+                        else if (validarCasillaHab(posSpawnX-1, posSpawnY+1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY+1));
+                        else if (validarCasillaHab(posSpawnX-1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY));
+                        else break;
+                        actualizarZombies();
+                        break;
+                    case 8:
+                        if (validarCasillaHab(posSpawnX+1, posSpawnY-1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY-1));
+                        else if (validarCasillaHab(posSpawnX+1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY));
+                        else if (validarCasillaHab(posSpawnX, posSpawnY-1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY-1));
+                        else if (validarCasillaHab(posSpawnX-1, posSpawnY-1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY-1));
+                        else if (validarCasillaHab(posSpawnX-1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY));
+                        else break;
+                        actualizarZombies();
+                        break;
+                    default:
+                        if (validarCasillaHab(posSpawnX, posSpawnY-1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY-1));
+                        else if (validarCasillaHab(posSpawnX+1, posSpawnY-1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY-1));
+                        else if (validarCasillaHab(posSpawnX+1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY));
+                        else if (validarCasillaHab(posSpawnX+1, posSpawnY+1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY+1));
+                        else if (validarCasillaHab(posSpawnX, posSpawnY+1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY+1));
+                        else if (validarCasillaHab(posSpawnX-1, posSpawnY+1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY+1));
+                        else if (validarCasillaHab(posSpawnX-1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY));
+                        else if (validarCasillaHab(posSpawnX-1, posSpawnY-1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY-1));
+                        else break;
+                        actualizarZombies();
+                        break;
+                }
+            }
+        }
+    }
+    private boolean isSpawining(){
+        int numAleatorio = (int) Math.floor(Math.random() * (100));
+        if (numAleatorio%3==0){
+            return false;
+        }
+        return true;
     }
     private void ActualizarTablero(){
         for (int i=0;i<12;i++){
@@ -70,6 +258,7 @@ public class Tablero extends JFrame {
                 botonesGraficos[i][j].setBorder(cuadradosGLogico[i][j].getBorder());
             }
         }
+        panelContenedor.setBounds(300, -30, 925, 726);
     }
     private void CrearMapaNuevo(){
         for (int i = 0; i < 12; i++){
@@ -336,7 +525,7 @@ public class Tablero extends JFrame {
                             if (isvalidAttack(actualX, actualY, atacarX, atacarY, personajes.get(i).getArma().getRango())){
                                 //SIGUE REALIZAR LOS ATAQUES
                                 for (int z=0;z<zombies.size();z++){
-                                    if (zombies.get(z).getX()==atacarX && zombies.get(z).getY() == atacarY){
+                                    if (zombies.get(z).getPosX()==atacarX && zombies.get(z).getPosY() == atacarY){
                                         zombies.get(z).recibirDano(personajes.get(i).getArma().getDano());
                                         if (zombies.get(z).getSalud()<=0){
                                             cuadradosGLogico[atacarX][atacarY] = new Casilla(atacarX, atacarY);
