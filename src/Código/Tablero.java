@@ -19,7 +19,7 @@ public class Tablero extends JFrame {
     private ArrayList<Zombie> zombies = new ArrayList<Zombie>();
     private ArrayList<SpawningPoint> spawningPoints = new ArrayList<SpawningPoint>();
 
-    private LableHandler lableHandler = new LableHandler();
+    private ClickJugadorHandler clickJugadorHandler = new ClickJugadorHandler();
     private PanelStats statsPanel = new PanelStats();
 
     private int turno = 0;
@@ -44,12 +44,14 @@ public class Tablero extends JFrame {
         panelContenedor.setBounds(300, -30, 925, 726);
         panelContenedor.setResizable(false);
         panelContenedor.setVisible(true);
-        panelContenedor.setEnabled(true);
+        panelContenedor.setEnabled(true);// (2,5) y (4,4)     (4,5)
+        /*int distancia1 = obtenerDistancia(4,5,2,5);
+        int distancia2 = obtenerDistancia(4,5,4,4);
+        System.out.println(distancia1);
+        System.out.println(distancia2);
+        System.out.println(distancia1-distancia2);*/
 
         CrearMapaNuevo();
-        for (int i=0;i<5;i++){
-
-        }
         panelContenedor.setVisible(true);
         panelContenedor.setClosable(false);
 
@@ -61,7 +63,358 @@ public class Tablero extends JFrame {
         turnoJugador();
     }
     private void turnoJugador(){
-        activarSpawningP();
+        turno++;
+        statsPanel.actualizarPaneles();
+        if (turno>15){
+            JOptionPane.showMessageDialog(null, "¡¡¡ FELICIDADES, HAS SOBREVIVIDO A 15 OLEADAS !!!");
+            for (int f=0;f<12;f++) {
+                for (int c = 0; c < 12; c++) {
+                    cuadradosGLogico[f][c].setEnabled(false);
+                    botonesGraficos[f][c].setEnabled(false);
+                }
+            }
+            // habilitar boton reinicio juego
+            statsPanel.registroResultados.append("¡¡¡ FELICIDADES, HAS SOBREVIVIDO A 15 OLEADAS !!!");
+        }
+        else {
+            if (turno>1){
+                nuevoSpawn();
+            }
+            accionZombies();
+            activarSpawningP();
+            reiniciarRuido();
+        }
+        for (int p=0;p<personajes.size();p++){
+            personajes.get(p).resetTurno();
+        }
+        botonTurno.setEnabled(true);
+        statsPanel.registroResultados.append("Ha iniciado el turno "+turno+".\n");
+    }
+
+    private void nuevoSpawn() {
+        int numAleatorioX;
+        int numAleatorioY;
+        boolean bandCiclo;
+        bandCiclo = true;
+        while (bandCiclo) {
+            numAleatorioX = (int) Math.floor(Math.random() * (12));
+            numAleatorioY = (int) Math.floor(Math.random() * (12));
+            if (validarCasillaHab(numAleatorioX, numAleatorioY)) {
+                cuadradosGLogico[numAleatorioX][numAleatorioY] = new SpawningPoint(numAleatorioX, numAleatorioY);
+                spawningPoints.add(new SpawningPoint(numAleatorioX, numAleatorioY));
+                bandCiclo=false;
+            }
+        }
+    }
+
+    private void reiniciarRuido() {
+        for (int p=0;p<personajes.size();p++){
+            personajes.get(p).setRuidoActivo(0);
+        }
+    }
+    private int obtenerDistancia(int punto1X, int punto1Y, int punto2X, int punto2Y){
+        int dist;
+        dist = (int) Math.pow(Math.pow(punto2X-punto1X,2)+Math.pow(punto2Y-punto1Y, 2), 0.5);
+        return dist;
+    }
+    private void accionZombies(){
+        int indicePersonaje;
+        int danoRecibido;
+        int indiceBaseX;
+        int indiceBaseY;
+        for (int z=0;z<zombies.size();z++){
+            indicePersonaje = PersonajeRangoAtaqueZ(zombies.get(z).getPosX(), zombies.get(z).getPosY(),zombies.get(z).getRangoAtaque());
+            if (indicePersonaje>=0){
+                //isValidAttackZombie(zombies.get(z).getPosX(), zombies.get(z).getPosY(), )
+                danoRecibido = personajes.get(indicePersonaje).getSalud();
+                personajes.get(indicePersonaje).RecibirDano(zombies.get(z).getAtaque());
+                registrarAtaqueZombie(zombies.get(z), personajes.get(indicePersonaje), danoRecibido-personajes.get(indicePersonaje).getSalud());
+                verificarMuertePersonaje();
+            }
+            else {
+                indicePersonaje = PersonajeRangoVisionZ(zombies.get(z).getPosX(), zombies.get(z).getPosY(), zombies.get(z).getRangoVision());
+                if (indicePersonaje >= 0) {
+                    desplazarHaciaPosicion(z, personajes.get(indicePersonaje).getPosX(), personajes.get(indicePersonaje).getPosY());
+                }
+                else {
+                    indicePersonaje = ruidoMasAlto();
+                    if (indicePersonaje>=0){
+                        desplazarHaciaPosicion(z, personajes.get(indicePersonaje).getPosX(), personajes.get(indicePersonaje).getPosY());
+                    }
+                    else {
+                        indiceBaseX = ubicarBaseX();
+                        indiceBaseY = ubicarBaseY();
+                        desplazarHaciaPosicion(z, indiceBaseX, indiceBaseY);
+                    }
+                }
+            }
+            ActualizarTablero();
+        }
+    }
+
+    private int ubicarBaseY() {
+        for (int i=0;i<12;i++){
+            for (int j=0;j<12;j++){
+                if (cuadradosGLogico[i][j] instanceof Base)
+                    return j;
+            }
+        }
+        return -1;
+    }
+
+    private int ubicarBaseX() {
+        for (int i=0;i<12;i++){
+            for (int j=0;j<12;j++){
+                if (cuadradosGLogico[i][j] instanceof Base)
+                    return i;
+            }
+        }
+        return -1;
+    }
+
+    private int ruidoMasAlto() {
+        int ruido=0;
+        int indicePersonaje=-1;
+        for (int i=0;i<personajes.size();i++){
+            if (personajes.get(i).getRuidoActivo()>ruido){
+                ruido = personajes.get(i).getRuidoActivo();
+                indicePersonaje=i;
+            }
+        }
+        return indicePersonaje;
+    }
+
+    private void verificarMuertePersonaje() {
+        int indiceEliminar=-1;
+        for (int p=0;p<personajes.size();p++){
+            if (personajes.get(p).getSalud()<=0){
+                if (personajes.get(p) instanceof Guerrero)
+                    statsPanel.registroResultados.append("El Guerrero ha muerto a mano de los zombies.\n");
+                else if (personajes.get(p) instanceof Arquero)
+                    statsPanel.registroResultados.append("El Arquero ha muerto a mano de los zombies.\n");
+                else
+                    statsPanel.registroResultados.append("El Agente ha muerto a mano de los zombies.\n");
+                cuadradosGLogico[personajes.get(p).getPosX()][personajes.get(p).getPosY()] = new Casilla(personajes.get(p).getPosX(), personajes.get(p).getPosY());
+                //personajes.remove(p);
+                indiceEliminar = p;
+            }
+        }
+        if (indiceEliminar>=0)
+            personajes.remove(indiceEliminar);
+        if (personajes.isEmpty()){
+            statsPanel.registroResultados.append("¡¡¡NOO, han muerto todos tus personajes!!!");
+            // habilitar reinicio de juego
+            JOptionPane.showMessageDialog(null, "¡¡¡NOO, han muerto todos tus personajes!!!");
+            for (int f=0;f<12;f++) {
+                for (int c = 0; c < 12; c++) {
+                    cuadradosGLogico[f][c].setEnabled(false);
+                    botonesGraficos[f][c].setEnabled(false);
+                }
+            }
+        }
+        ActualizarTablero();
+    }
+    private void desplazarHaciaPosicion(int z, int posX1, int posY1) {
+        int direccion;
+        cuadradosGLogico[zombies.get(z).getPosX()][zombies.get(z).getPosY()] = new Casilla(zombies.get(z).getPosX(), zombies.get(z).getPosY());
+        direccion = obtenerDireccion(zombies.get(z).getPosX(), zombies.get(z).getPosY(), posX1, posY1);
+        switch (direccion){
+            case 1:
+                if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY()-1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oste
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX()-1, zombies.get(z).getPosY()-1)) {
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // NorOeste
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() - 1);
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX()+1, zombies.get(z).getPosY()-1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // SurOeste
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() + 1);
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX()+1, zombies.get(z).getPosY())){
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX()-1, zombies.get(z).getPosY())){
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
+                }
+                else break;
+                break;
+            case 2:
+                if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY()+1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX()-1, zombies.get(z).getPosY()+1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // NorEste
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() - 1);
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX()+1, zombies.get(z).getPosY()+1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // SurEste
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() + 1);
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX()+1, zombies.get(z).getPosY())){
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX()-1, zombies.get(z).getPosY())){
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
+                }
+                else break;
+                break;
+            case 3:
+                if (validarCasillaHab(zombies.get(z).getPosX()-1, zombies.get(z).getPosY())){
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
+                    //zombies.get(z).setPosY(zombies.get(z).getPosY());
+                    //cuadradosGLogico[zombies.get(z).getPosX()][zombies.get(z).getPosY()] = new ZombieCasilla(zombies.get(z).getPosX(), zombies.get(z).getPosY(), zombies.get(z));
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX()-1, zombies.get(z).getPosY()-1)) {
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // NorOeste
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() - 1);
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX()-1, zombies.get(z).getPosY()+1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // NorEste
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() - 1);
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY()-1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oste
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY()+1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
+                }
+                else break;
+                break;
+            case 4:
+                if (validarCasillaHab(zombies.get(z).getPosX()+1, zombies.get(z).getPosY())){
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX()+1, zombies.get(z).getPosY()+1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // SurEste
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() + 1);
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX()+1, zombies.get(z).getPosY()-1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // SurOeste
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() + 1);
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY()-1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oste
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY()+1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
+                }
+                else break;
+                break;
+            case 5:
+                if (validarCasillaHab(zombies.get(z).getPosX()-1, zombies.get(z).getPosY()-1)) {
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // NorOeste
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() - 1);
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX()-1, zombies.get(z).getPosY())){
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY()-1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oeste
+                }
+                else break;
+                break;
+            case 6:
+                if (validarCasillaHab(zombies.get(z).getPosX()-1, zombies.get(z).getPosY()+1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // NorEste
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() - 1);
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX()-1, zombies.get(z).getPosY())){
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY()+1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
+                }
+                else break;
+                break;
+            case 7:
+                if (validarCasillaHab(zombies.get(z).getPosX()+1, zombies.get(z).getPosY()-1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // SurOeste
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() + 1);
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX()+1, zombies.get(z).getPosY())){
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY()-1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oeste
+                }
+                else break;
+                break;
+            default:
+                if (validarCasillaHab(zombies.get(z).getPosX()+1, zombies.get(z).getPosY()+1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // SurEste
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() + 1);
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX()+1, zombies.get(z).getPosY())){
+                    zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
+                }
+                else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY()+1)){
+                    zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
+                }
+                else break;
+                break;
+        }
+        actualizarZombies();
+    }
+    private int obtenerDireccion(int actualX, int actualY, int destinoX, int destinoY) {
+        // 1 Oeste, 2 Este, 3 Norte, 4 Sur, 5 NorOeste, 6 NorEste, 7 SurOeste, 8 SurEste
+        if (actualX==destinoX && actualY>destinoY)
+            return 1;
+        else if (actualX==destinoX && actualY<destinoY)
+            return 2;
+        else if (actualY==destinoY && actualX>destinoX)
+            return 3;
+        else if (actualY==destinoY && actualX<destinoX)
+            return 4;
+        else if (actualY>destinoY && actualX>destinoX)
+            return 5;
+        else if (actualY<destinoY && actualX>destinoX)
+            return 6;
+        else if (actualY>destinoY && actualX<destinoX)
+            return 7;
+        else
+            return 8;
+    }
+    private int PersonajeRangoVisionZ(int actualX, int actualY, int rango){
+        int distancia;
+        int distanciaMenor = rango+1;
+        int indicePersonajeCercano=-1;
+        for (int p=0;p<personajes.size();p++){
+            if (Math.abs(actualX-personajes.get(p).getPosX()) <= rango && Math.abs(actualY-personajes.get(p).getPosY()) <= rango){
+                distancia = obtenerDistancia(actualX, actualY, personajes.get(p).getPosX(), personajes.get(p).getPosY());
+                if (distancia<distanciaMenor) {
+                    distanciaMenor = distancia;
+                    indicePersonajeCercano=p;
+                }
+            }
+        }
+        return indicePersonajeCercano;
+    }
+    private void registrarAtaqueZombie(Zombie zombie, Personaje personaje, int dano){
+        if (zombie instanceof ZombieBasico){
+            if (personaje instanceof Guerrero)
+                statsPanel.registroResultados.append("Un zombie básico ha atacado al Guerrero y ha recibido "+dano+" de daño.\n");
+            else if (personaje instanceof Arquero)
+                statsPanel.registroResultados.append("Un zombie básico ha atacado al Arquero y ha recibido "+dano+" de daño.\n");
+            else
+                statsPanel.registroResultados.append("Un zombie básico ha atacado al Agente y ha recibido "+dano+" de daño.\n");
+        }
+        else if (zombie instanceof ZombieCorredor){
+            if (personaje instanceof Guerrero)
+                statsPanel.registroResultados.append("Un zombie Corredor ha atacado al Guerrero y ha recibido "+dano+" de daño.\n");
+            else if (personaje instanceof Arquero)
+                statsPanel.registroResultados.append("Un zombie Corredor ha atacado al Arquero y ha recibido "+dano+" de daño.\n");
+            else
+                statsPanel.registroResultados.append("Un zombie Corredor ha atacado al Agente y ha recibido "+dano+" de daño.\n");
+        }
+        else {
+            if (personaje instanceof Guerrero)
+                statsPanel.registroResultados.append("Un zombie Samurai ha atacado al Guerrero y ha recibido "+dano+" de daño.\n");
+            else if (personaje instanceof Arquero)
+                statsPanel.registroResultados.append("Un zombie Samurai ha atacado al Arquero y ha recibido "+dano+" de daño.\n");
+            else
+                statsPanel.registroResultados.append("Un zombie Samurai ha atacado al Agente y ha recibido "+dano+" de daño.\n");
+        }
     }
     private int validarPosSpawn(int posSpawnX,int posSpawnY){
         // 1 superior izquierda. 2 superior derecha. 3 inferior izquierda. 4 inferior derecha. 5 borde superior, 6 borde inferior, 7 borde izquierdo, 8 borde derecho, 9 centro.
@@ -117,129 +470,129 @@ public class Tablero extends JFrame {
             if (isSpawining()) {
                 numOpcion = validarPosSpawn(posSpawnX, posSpawnY);
                 // 1 superior izquierda. 2 superior derecha. 3 inferior izquierda. 4 inferior derecha. 5 borde superior, 6 borde inferior, 7 borde izquierdo, 8 borde derecho, 9 centro.
-                switch (numOpcion){
-                    case 1:
-                        if (validarCasillaHab(posSpawnX, posSpawnY+1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY+1));
-                        else if (validarCasillaHab(posSpawnX+1, posSpawnY+1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY+1));
-                        else if (validarCasillaHab(posSpawnX+1, posSpawnY))
-                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY));
+                switch (numOpcion) {
+                    case 1 -> {
+                        if (validarCasillaHab(posSpawnX, posSpawnY + 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY + 1));
+                        else if (validarCasillaHab(posSpawnX + 1, posSpawnY + 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX + 1, posSpawnY + 1));
+                        else if (validarCasillaHab(posSpawnX + 1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX + 1, posSpawnY));
                         else
                             break;
                         actualizarZombies();
-                        break;
-                    case 2:
-                        if (validarCasillaHab(posSpawnX, posSpawnY-1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY-1));
-                        else if (validarCasillaHab(posSpawnX+1, posSpawnY-1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY-1));
-                        else if (validarCasillaHab(posSpawnX+1, posSpawnY))
-                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY));
+                    }
+                    case 2 -> {
+                        if (validarCasillaHab(posSpawnX, posSpawnY - 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY - 1));
+                        else if (validarCasillaHab(posSpawnX + 1, posSpawnY - 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX + 1, posSpawnY - 1));
+                        else if (validarCasillaHab(posSpawnX + 1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX + 1, posSpawnY));
                         else
                             break;
                         actualizarZombies();
-                        break;
-                    case 3:
-                        if (validarCasillaHab(posSpawnX-1, posSpawnY))
-                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY));
-                        else if (validarCasillaHab(posSpawnX-1, posSpawnY+1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY+1));
-                        else if (validarCasillaHab(posSpawnX, posSpawnY+1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY+1));
+                    }
+                    case 3 -> {
+                        if (validarCasillaHab(posSpawnX - 1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX - 1, posSpawnY));
+                        else if (validarCasillaHab(posSpawnX - 1, posSpawnY + 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX - 1, posSpawnY + 1));
+                        else if (validarCasillaHab(posSpawnX, posSpawnY + 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY + 1));
                         else
                             break;
                         actualizarZombies();
-                        break;
-                    case 4:
-                        if (validarCasillaHab(posSpawnX-1, posSpawnY))
-                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY));
-                        else if (validarCasillaHab(posSpawnX-1, posSpawnY-1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY-1));
-                        else if (validarCasillaHab(posSpawnX, posSpawnY-1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY-1));
+                    }
+                    case 4 -> {
+                        if (validarCasillaHab(posSpawnX - 1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX - 1, posSpawnY));
+                        else if (validarCasillaHab(posSpawnX - 1, posSpawnY - 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX - 1, posSpawnY - 1));
+                        else if (validarCasillaHab(posSpawnX, posSpawnY - 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY - 1));
                         else
                             break;
                         actualizarZombies();
-                        break;
-                    case 5:
-                        if (validarCasillaHab(posSpawnX, posSpawnY-1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY-1));
-                        else if (validarCasillaHab(posSpawnX+1, posSpawnY-1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY-1));
-                        else if (validarCasillaHab(posSpawnX+1, posSpawnY))
-                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY));
-                        else if (validarCasillaHab(posSpawnX+1, posSpawnY+1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY+1));
-                        else if (validarCasillaHab(posSpawnX, posSpawnY+1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY+1));
+                    }
+                    case 5 -> {
+                        if (validarCasillaHab(posSpawnX, posSpawnY - 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY - 1));
+                        else if (validarCasillaHab(posSpawnX + 1, posSpawnY - 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX + 1, posSpawnY - 1));
+                        else if (validarCasillaHab(posSpawnX + 1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX + 1, posSpawnY));
+                        else if (validarCasillaHab(posSpawnX + 1, posSpawnY + 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX + 1, posSpawnY + 1));
+                        else if (validarCasillaHab(posSpawnX, posSpawnY + 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY + 1));
                         else
                             break;
                         actualizarZombies();
-                        break;
-                    case 6:
-                        if (validarCasillaHab(posSpawnX, posSpawnY-1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY-1));
-                        else if (validarCasillaHab(posSpawnX-1, posSpawnY-1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY-1));
-                        else if (validarCasillaHab(posSpawnX-1, posSpawnY))
-                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY));
-                        else if (validarCasillaHab(posSpawnX-1, posSpawnY+1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY+1));
-                        else if (validarCasillaHab(posSpawnX, posSpawnY+1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY+1));
+                    }
+                    case 6 -> {
+                        if (validarCasillaHab(posSpawnX, posSpawnY - 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY - 1));
+                        else if (validarCasillaHab(posSpawnX - 1, posSpawnY - 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX - 1, posSpawnY - 1));
+                        else if (validarCasillaHab(posSpawnX - 1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX - 1, posSpawnY));
+                        else if (validarCasillaHab(posSpawnX - 1, posSpawnY + 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX - 1, posSpawnY + 1));
+                        else if (validarCasillaHab(posSpawnX, posSpawnY + 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY + 1));
                         else
                             break;
                         actualizarZombies();
-                        break;
-                    case 7:
-                        if (validarCasillaHab(posSpawnX+1, posSpawnY))
-                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY));
-                        else if (validarCasillaHab(posSpawnX+1, posSpawnY+1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY+1));
-                        else if (validarCasillaHab(posSpawnX, posSpawnY+1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY+1));
-                        else if (validarCasillaHab(posSpawnX-1, posSpawnY+1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY+1));
-                        else if (validarCasillaHab(posSpawnX-1, posSpawnY))
-                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY));
+                    }
+                    case 7 -> {
+                        if (validarCasillaHab(posSpawnX + 1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX + 1, posSpawnY));
+                        else if (validarCasillaHab(posSpawnX + 1, posSpawnY + 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX + 1, posSpawnY + 1));
+                        else if (validarCasillaHab(posSpawnX, posSpawnY + 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY + 1));
+                        else if (validarCasillaHab(posSpawnX - 1, posSpawnY + 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX - 1, posSpawnY + 1));
+                        else if (validarCasillaHab(posSpawnX - 1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX - 1, posSpawnY));
                         else break;
                         actualizarZombies();
-                        break;
-                    case 8:
-                        if (validarCasillaHab(posSpawnX+1, posSpawnY-1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY-1));
-                        else if (validarCasillaHab(posSpawnX+1, posSpawnY))
-                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY));
-                        else if (validarCasillaHab(posSpawnX, posSpawnY-1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY-1));
-                        else if (validarCasillaHab(posSpawnX-1, posSpawnY-1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY-1));
-                        else if (validarCasillaHab(posSpawnX-1, posSpawnY))
-                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY));
+                    }
+                    case 8 -> {
+                        if (validarCasillaHab(posSpawnX + 1, posSpawnY - 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX + 1, posSpawnY - 1));
+                        else if (validarCasillaHab(posSpawnX + 1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX + 1, posSpawnY));
+                        else if (validarCasillaHab(posSpawnX, posSpawnY - 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY - 1));
+                        else if (validarCasillaHab(posSpawnX - 1, posSpawnY - 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX - 1, posSpawnY - 1));
+                        else if (validarCasillaHab(posSpawnX - 1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX - 1, posSpawnY));
                         else break;
                         actualizarZombies();
-                        break;
-                    default:
-                        if (validarCasillaHab(posSpawnX, posSpawnY-1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY-1));
-                        else if (validarCasillaHab(posSpawnX+1, posSpawnY-1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY-1));
-                        else if (validarCasillaHab(posSpawnX+1, posSpawnY))
-                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY));
-                        else if (validarCasillaHab(posSpawnX+1, posSpawnY+1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX+1, posSpawnY+1));
-                        else if (validarCasillaHab(posSpawnX, posSpawnY+1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY+1));
-                        else if (validarCasillaHab(posSpawnX-1, posSpawnY+1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY+1));
-                        else if (validarCasillaHab(posSpawnX-1, posSpawnY))
-                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY));
-                        else if (validarCasillaHab(posSpawnX-1, posSpawnY-1))
-                            zombies.add(spawnZombieAleatorio(posSpawnX-1, posSpawnY-1));
+                    }
+                    default -> {
+                        if (validarCasillaHab(posSpawnX, posSpawnY - 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY - 1));
+                        else if (validarCasillaHab(posSpawnX + 1, posSpawnY - 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX + 1, posSpawnY - 1));
+                        else if (validarCasillaHab(posSpawnX + 1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX + 1, posSpawnY));
+                        else if (validarCasillaHab(posSpawnX + 1, posSpawnY + 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX + 1, posSpawnY + 1));
+                        else if (validarCasillaHab(posSpawnX, posSpawnY + 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX, posSpawnY + 1));
+                        else if (validarCasillaHab(posSpawnX - 1, posSpawnY + 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX - 1, posSpawnY + 1));
+                        else if (validarCasillaHab(posSpawnX - 1, posSpawnY))
+                            zombies.add(spawnZombieAleatorio(posSpawnX - 1, posSpawnY));
+                        else if (validarCasillaHab(posSpawnX - 1, posSpawnY - 1))
+                            zombies.add(spawnZombieAleatorio(posSpawnX - 1, posSpawnY - 1));
                         else break;
                         actualizarZombies();
-                        break;
+                    }
                 }
             }
         }
@@ -278,13 +631,13 @@ public class Tablero extends JFrame {
                 }
                 botonesGraficos[i][j] = new JButton(cuadradosGLogico[i][j].getIcon());
                 panelContenedor.add(botonesGraficos[i][j]);
-                botonesGraficos[i][j].addActionListener(lableHandler);
+                botonesGraficos[i][j].addActionListener(clickJugadorHandler);
             }
         }
         AñadirPersonajes();
-        AñadirObstaculos();
+        AnadirObstaculos();
     }
-    private void AñadirObstaculos(){
+    private void AnadirObstaculos(){
         int numAleatorioX;
         int numAleatorioY;
         boolean bandCiclo;
@@ -315,17 +668,17 @@ public class Tablero extends JFrame {
         if (!personajes.isEmpty()){
             personajes.clear();
         }
-        Guerrero guerrero = new Guerrero(7, 0);
-        Arquero arquero = new Arquero(6, 0);
-        Agente agente = new Agente(8,0);
+        Guerrero guerrero = new Guerrero(11, 2);
+        Arquero arquero = new Arquero(10, 1);
+        Agente agente = new Agente(9,0);
         personajes.add(guerrero);
         personajes.add(arquero);
         personajes.add(agente);
         for (int i=0; i<personajes.size(); i++){
-            cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = new JugadorCasilla(personajes.get(i).getX(),personajes.get(i).getY(), personajes.get(i));
+            cuadradosGLogico[personajes.get(i).getPosX()][personajes.get(i).getPosY()] = new JugadorCasilla(personajes.get(i).getPosX(),personajes.get(i).getPosY(), personajes.get(i));
         }
     }
-    private class LableHandler  implements ActionListener {
+    private class ClickJugadorHandler implements ActionListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -381,8 +734,8 @@ public class Tablero extends JFrame {
                 if (guerreroSeleccionado){
                     if (personajes.get(i) instanceof Guerrero){
                         if (personajes.get(i).getDesplazamientoPorTurno()>0){
-                            actualX = personajes.get(i).getX();
-                            actualY = personajes.get(i).getY();
+                            actualX = personajes.get(i).getPosX();
+                            actualY = personajes.get(i).getPosY();
                             if (isValidMove(actualX, actualY, posItemX, posItemY)){
                                 if (item instanceof Bebida){
                                     personajes.get(i).setSalud(personajes.get(i).getSalud()+((Bebida) item).getMasSalud());
@@ -394,11 +747,11 @@ public class Tablero extends JFrame {
                                     personajes.get(i).setDesplazamientoPorTurno(personajes.get(i).getDesplazamientoPorTurno()+1);
                                     personajes.get(i).setAtaquesPorTurno(personajes.get(i).getAtaquesPorTurno()+1);
                                 }
-                                cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = new Casilla(personajes.get(i).getX(), personajes.get(i).getY());
-                                personajes.get(i).setX(posItemX);
-                                personajes.get(i).setY(posItemY);
+                                cuadradosGLogico[personajes.get(i).getPosX()][personajes.get(i).getPosY()] = new Casilla(personajes.get(i).getPosX(), personajes.get(i).getPosY());
+                                personajes.get(i).setPosX(posItemX);
+                                personajes.get(i).setPosY(posItemY);
                                 personajes.get(i).setDesplazamientoPorTurno(personajes.get(i).getDesplazamientoPorTurno()-1);
-                                cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = new JugadorCasilla(personajes.get(i).getX(), personajes.get(i).getY(), personajes.get(i));
+                                cuadradosGLogico[personajes.get(i).getPosX()][personajes.get(i).getPosY()] = new JugadorCasilla(personajes.get(i).getPosX(), personajes.get(i).getPosY(), personajes.get(i));
                                 cuadradosGLogico[posItemX][posItemY].setBorder(BorderFactory.createLineBorder(Color.RED));
                             } else {
                                 JOptionPane.showMessageDialog(null, "Acción inválida. Cada personaje solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
@@ -413,8 +766,8 @@ public class Tablero extends JFrame {
                 else if (arqueroSeleccionado) {
                     if (personajes.get(i) instanceof Arquero) {
                         if (personajes.get(i).getDesplazamientoPorTurno()>0){
-                            actualX = personajes.get(i).getX();
-                            actualY = personajes.get(i).getY();
+                            actualX = personajes.get(i).getPosX();
+                            actualY = personajes.get(i).getPosY();
                             if (isValidMove(actualX, actualY, posItemX, posItemY)){
                                 if (item instanceof Bebida){
                                     personajes.get(i).setSalud(personajes.get(i).getSalud()+((Bebida) item).getMasSalud());
@@ -427,18 +780,18 @@ public class Tablero extends JFrame {
                                     personajes.get(i).setAtaquesPorTurno(personajes.get(i).getAtaquesPorTurno()+1);
                                 }
                                 if (arqueroEncaramado){
-                                    cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = respaldoCasilla;
-                                    personajes.get(i).setX(posItemX);
-                                    personajes.get(i).setY(posItemY);
+                                    cuadradosGLogico[personajes.get(i).getPosX()][personajes.get(i).getPosY()] = respaldoCasilla;
+                                    personajes.get(i).setPosX(posItemX);
+                                    personajes.get(i).setPosY(posItemY);
                                     arqueroEncaramado = false;
                                     respaldoCasilla = null;
                                 }
                                 else {
-                                    cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = new Casilla(personajes.get(i).getX(), personajes.get(i).getY());
-                                    personajes.get(i).setX(posItemX);
-                                    personajes.get(i).setY(posItemY);
+                                    cuadradosGLogico[personajes.get(i).getPosX()][personajes.get(i).getPosY()] = new Casilla(personajes.get(i).getPosX(), personajes.get(i).getPosY());
+                                    personajes.get(i).setPosX(posItemX);
+                                    personajes.get(i).setPosY(posItemY);
                                 }
-                                cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(i).getX(), personajes.get(i).getY(), personajes.get(i));
+                                cuadradosGLogico[personajes.get(i).getPosX()][personajes.get(i).getPosY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(i).getPosX(), personajes.get(i).getPosY(), personajes.get(i));
                                 personajes.get(i).setDesplazamientoPorTurno(personajes.get(i).getDesplazamientoPorTurno() - 1);
                                 cuadradosGLogico[posItemX][posItemY].setBorder(BorderFactory.createLineBorder(Color.RED));
                             } else {
@@ -454,8 +807,8 @@ public class Tablero extends JFrame {
                 else {
                     if (personajes.get(i) instanceof Agente) {
                         if (personajes.get(i).getDesplazamientoPorTurno()>0){
-                            actualX = personajes.get(i).getX();
-                            actualY = personajes.get(i).getY();
+                            actualX = personajes.get(i).getPosX();
+                            actualY = personajes.get(i).getPosY();
                             if (isValidMove(actualX, actualY, posItemX, posItemY)){
                                 if (item instanceof Bebida){
                                     personajes.get(i).setSalud(personajes.get(i).getSalud()+((Bebida) item).getMasSalud());
@@ -467,11 +820,11 @@ public class Tablero extends JFrame {
                                     personajes.get(i).setDesplazamientoPorTurno(personajes.get(i).getDesplazamientoPorTurno()+1);
                                     personajes.get(i).setAtaquesPorTurno(personajes.get(i).getAtaquesPorTurno()+1);
                                 }
-                                cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = new Casilla(personajes.get(i).getX(), personajes.get(i).getY());
-                                personajes.get(i).setX(posItemX);
-                                personajes.get(i).setY(posItemY);
+                                cuadradosGLogico[personajes.get(i).getPosX()][personajes.get(i).getPosY()] = new Casilla(personajes.get(i).getPosX(), personajes.get(i).getPosY());
+                                personajes.get(i).setPosX(posItemX);
+                                personajes.get(i).setPosY(posItemY);
                                 personajes.get(i).setDesplazamientoPorTurno(personajes.get(i).getDesplazamientoPorTurno()-1);
-                                cuadradosGLogico[personajes.get(i).getX()][personajes.get(i).getY()] = new JugadorCasilla(personajes.get(i).getX(), personajes.get(i).getY(), personajes.get(i));
+                                cuadradosGLogico[personajes.get(i).getPosX()][personajes.get(i).getPosY()] = new JugadorCasilla(personajes.get(i).getPosX(), personajes.get(i).getPosY(), personajes.get(i));
                                 cuadradosGLogico[posItemX][posItemY].setBorder(BorderFactory.createLineBorder(Color.RED));
                             } else {
                                 JOptionPane.showMessageDialog(null, "Acción inválida. Cada personaje solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
@@ -488,11 +841,35 @@ public class Tablero extends JFrame {
         else
             JOptionPane.showMessageDialog(null,"Seleccione a un personaje amistoso para recoger el item.");
     }
+    private int PersonajeRangoAtaqueZ(int actualX, int actualY, int rango){
+        int distancia;
+        for (int p=0;p<personajes.size();p++){
+            if (Math.abs(actualX-personajes.get(p).getPosX()) <= rango && actualY==personajes.get(p).getPosY()){
+                distancia = Math.abs(actualX-personajes.get(p).getPosX());
+                for (int i=1;i<distancia;i++){
+                    if (cuadradosGLogico[actualX+i][actualY] instanceof Montaña || cuadradosGLogico[actualX+i][actualY] instanceof Escombro || cuadradosGLogico[actualX+i][actualY] instanceof SpawningPoint) {
+                        return -1;
+                    }
+                }
+                return p;
+            }
+            else if (Math.abs(actualY-personajes.get(p).getPosY()) <= rango && actualX==personajes.get(p).getPosX()){
+                distancia = Math.abs(actualY-personajes.get(p).getPosY());
+                for (int i=1;i<distancia;i++){
+                    if (cuadradosGLogico[actualX][actualY+i] instanceof Montaña || cuadradosGLogico[actualX][actualY+i] instanceof Escombro || cuadradosGLogico[actualX][actualY+i] instanceof SpawningPoint) {
+                        return -1;
+                    }
+                }
+                return p;
+            }
+        }
+        return -1;
+    }
     private boolean isvalidAttack(int actualX,int actualY,int atacarX,int atacarY, int rango){
-        int distanica;
+        int distancia;
         if (Math.abs(actualX-atacarX) <= rango && actualY==atacarY){
-            distanica = Math.abs(actualX-atacarX);
-            for (int i=1;i<distanica;i++){
+            distancia = Math.abs(actualX-atacarX);
+            for (int i=1;i<distancia;i++){
                 if (cuadradosGLogico[actualX+i][actualY] instanceof Montaña || cuadradosGLogico[actualX+i][actualY] instanceof Escombro || cuadradosGLogico[actualX+i][actualY] instanceof SpawningPoint) {
                     obstaculoEnMedio = true;
                     return false;
@@ -501,8 +878,8 @@ public class Tablero extends JFrame {
             return true;
         }
         else if (Math.abs(actualY-atacarY) <= rango && actualX==atacarX){
-            distanica = Math.abs(actualY-atacarY);
-            for (int i=1;i<distanica;i++){
+            distancia = Math.abs(actualY-atacarY);
+            for (int i=1;i<distancia;i++){
                 if (cuadradosGLogico[actualX][actualY+i] instanceof Montaña || cuadradosGLogico[actualX][actualY+i] instanceof Escombro || cuadradosGLogico[actualX][actualY+i] instanceof SpawningPoint) {
                     obstaculoEnMedio = true;
                     return false;
@@ -520,14 +897,17 @@ public class Tablero extends JFrame {
                 if (guerreroSeleccionado){
                     if (personajes.get(i) instanceof Guerrero){
                         if (personajes.get(i).getAtaquesPorTurno()>0){
-                            actualX = personajes.get(i).getX();
-                            actualY = personajes.get(i).getY();
+                            actualX = personajes.get(i).getPosX();
+                            actualY = personajes.get(i).getPosY();
                             if (isvalidAttack(actualX, actualY, atacarX, atacarY, personajes.get(i).getArma().getRango())){
+                                personajes.get(i).setAtaquesPorTurno(personajes.get(i).getAtaquesPorTurno()-1);
                                 //SIGUE REALIZAR LOS ATAQUES
                                 for (int z=0;z<zombies.size();z++){
                                     if (zombies.get(z).getPosX()==atacarX && zombies.get(z).getPosY() == atacarY){
                                         zombies.get(z).recibirDano(personajes.get(i).getArma().getDano());
+                                        personajes.get(i).setRuidoActivo(personajes.get(i).getArma().getRuido());
                                         if (zombies.get(z).getSalud()<=0){
+                                            //se añade algoritmo de item
                                             cuadradosGLogico[atacarX][atacarY] = new Casilla(atacarX, atacarY);
                                             zombies.remove(z);
                                             statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie y lo ha eliminado.\n");
@@ -554,10 +934,26 @@ public class Tablero extends JFrame {
                 else if (arqueroSeleccionado){
                     if (personajes.get(i) instanceof Arquero){
                         if (personajes.get(i).getAtaquesPorTurno()>0){
-                            actualX = personajes.get(i).getX();
-                            actualY = personajes.get(i).getY();
+                            actualX = personajes.get(i).getPosX();
+                            actualY = personajes.get(i).getPosY();
                             if (isvalidAttack(actualX, actualY, atacarX, atacarY, personajes.get(i).getArma().getRango())){
-
+                                personajes.get(i).setAtaquesPorTurno(personajes.get(i).getAtaquesPorTurno()-1);
+                                for (int z=0;z<zombies.size();z++){
+                                    if (zombies.get(z).getPosX()==atacarX && zombies.get(z).getPosY() == atacarY){
+                                        zombies.get(z).recibirDano(personajes.get(i).getArma().getDano());
+                                        personajes.get(i).setRuidoActivo(personajes.get(i).getArma().getRuido());
+                                        if (zombies.get(z).getSalud()<=0){
+                                            //se añade algoritmo de item
+                                            cuadradosGLogico[atacarX][atacarY] = new Casilla(atacarX, atacarY);
+                                            zombies.remove(z);
+                                            statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie y lo ha eliminado.\n");
+                                        }
+                                        else {
+                                            statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie.\n");
+                                        }
+                                        //zombies.get(z).getSalud()personajes.get(i).getArma().getDano();
+                                    }
+                                }
                             }
                             else if (obstaculoEnMedio){
                                 JOptionPane.showMessageDialog(null, "Hay un obstaculo que impide realizar el ataque.");
@@ -574,10 +970,26 @@ public class Tablero extends JFrame {
                 else {
                     if (personajes.get(i) instanceof Agente){
                         if (personajes.get(i).getAtaquesPorTurno()>0){
-                            actualX = personajes.get(i).getX();
-                            actualY = personajes.get(i).getY();
+                            actualX = personajes.get(i).getPosX();
+                            actualY = personajes.get(i).getPosY();
                             if (isvalidAttack(actualX, actualY, atacarX, atacarY, personajes.get(i).getArma().getRango())){
-
+                                personajes.get(i).setAtaquesPorTurno(personajes.get(i).getAtaquesPorTurno()-1);
+                                for (int z=0;z<zombies.size();z++){
+                                    if (zombies.get(z).getPosX()==atacarX && zombies.get(z).getPosY() == atacarY){
+                                        zombies.get(z).recibirDano(personajes.get(i).getArma().getDano());
+                                        personajes.get(i).setRuidoActivo(personajes.get(i).getArma().getRuido());
+                                        if (zombies.get(z).getSalud()<=0){
+                                            //se añade algoritmo de item
+                                            cuadradosGLogico[atacarX][atacarY] = new Casilla(atacarX, atacarY);
+                                            zombies.remove(z);
+                                            statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie y lo ha eliminado.\n");
+                                        }
+                                        else {
+                                            statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie.\n");
+                                        }
+                                        //zombies.get(z).getSalud()personajes.get(i).getArma().getDano();
+                                    }
+                                }
                             }
                             else if (obstaculoEnMedio){
                                 JOptionPane.showMessageDialog(null, "Hay un obstaculo que impide realizar el ataque.");
@@ -602,8 +1014,8 @@ public class Tablero extends JFrame {
             for (int k=0;k<personajes.size();k++){
                 if (agenteSeleccionado){
                     if (personajes.get(k) instanceof Agente){
-                        actualX = personajes.get(k).getX();
-                        actualY = personajes.get(k).getY();
+                        actualX = personajes.get(k).getPosX();
+                        actualY = personajes.get(k).getPosY();
                         if (isValidMove(actualX, actualY, moverX, moverY)){
                             JOptionPane.showMessageDialog(null, "El Agente no puede moverse ni atacar un Spawning Point.");
                         }
@@ -611,8 +1023,8 @@ public class Tablero extends JFrame {
                 }
                 else if (guerreroSeleccionado){
                     if (personajes.get(k) instanceof Guerrero){
-                        actualX = personajes.get(k).getX();
-                        actualY = personajes.get(k).getY();
+                        actualX = personajes.get(k).getPosX();
+                        actualY = personajes.get(k).getPosY();
                         if (isValidMove(actualX, actualY, moverX, moverY)){
                             JOptionPane.showMessageDialog(null, "El Guerrero no puede moverse ni atacar un Spawning Point.");
                         }
@@ -620,8 +1032,8 @@ public class Tablero extends JFrame {
                 }
                 else {
                     if (personajes.get(k) instanceof Arquero){
-                        actualX = personajes.get(k).getX();
-                        actualY = personajes.get(k).getY();
+                        actualX = personajes.get(k).getPosX();
+                        actualY = personajes.get(k).getPosY();
                         if (isValidMove(actualX, actualY, moverX, moverY)){
                             JOptionPane.showMessageDialog(null, "El Arquero no puede moverse ni atacar un Spawning Point.");
                         }
@@ -641,17 +1053,17 @@ public class Tablero extends JFrame {
                 if (personajes.get(k) instanceof Arquero) {
                     if (arqueroSeleccionado){
                         if (personajes.get(k).getDesplazamientoPorTurno()>0) {
-                            actualX = personajes.get(k).getX();
-                            actualY = personajes.get(k).getY();
+                            actualX = personajes.get(k).getPosX();
+                            actualY = personajes.get(k).getPosY();
                             if (isValidMove(actualX, actualY, moverX, moverY)) {
                                 if (((Arquero) personajes.get(k)).isSubirObstaculos()) {
                                     if (!arqueroEncaramado) {
-                                        cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = new Casilla(personajes.get(k).getX(), personajes.get(k).getY());
-                                        personajes.get(k).setX(moverX);
-                                        personajes.get(k).setY(moverY);
+                                        cuadradosGLogico[personajes.get(k).getPosX()][personajes.get(k).getPosY()] = new Casilla(personajes.get(k).getPosX(), personajes.get(k).getPosY());
+                                        personajes.get(k).setPosX(moverX);
+                                        personajes.get(k).setPosY(moverY);
                                         personajes.get(k).setDesplazamientoPorTurno(personajes.get(k).getDesplazamientoPorTurno() - 1);
-                                        respaldoCasilla = cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()];
-                                        cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(k).getX(), personajes.get(k).getY(), personajes.get(k));
+                                        respaldoCasilla = cuadradosGLogico[personajes.get(k).getPosX()][personajes.get(k).getPosY()];
+                                        cuadradosGLogico[personajes.get(k).getPosX()][personajes.get(k).getPosY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(k).getPosX(), personajes.get(k).getPosY(), personajes.get(k));
                                         cuadradosGLogico[moverX][moverY].setBorder(BorderFactory.createLineBorder(Color.RED));
                                         arqueroEncaramado = true;
                                     }
@@ -703,14 +1115,14 @@ public class Tablero extends JFrame {
             if (personajes.get(k) instanceof Guerrero){
                 if (guerreroSeleccionado){
                     if (personajes.get(k).getDesplazamientoPorTurno()>0) {
-                        actualX = personajes.get(k).getX();
-                        actualY = personajes.get(k).getY();
+                        actualX = personajes.get(k).getPosX();
+                        actualY = personajes.get(k).getPosY();
                         if (isValidMove(actualX, actualY, moverX, moverY)) {
-                            cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = new Casilla(personajes.get(k).getX(), personajes.get(k).getY());
-                            personajes.get(k).setX(moverX);
-                            personajes.get(k).setY(moverY);
+                            cuadradosGLogico[personajes.get(k).getPosX()][personajes.get(k).getPosY()] = new Casilla(personajes.get(k).getPosX(), personajes.get(k).getPosY());
+                            personajes.get(k).setPosX(moverX);
+                            personajes.get(k).setPosY(moverY);
                             personajes.get(k).setDesplazamientoPorTurno(personajes.get(k).getDesplazamientoPorTurno()-1);
-                            cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = new JugadorCasilla(personajes.get(k).getX(), personajes.get(k).getY(), personajes.get(k));
+                            cuadradosGLogico[personajes.get(k).getPosX()][personajes.get(k).getPosY()] = new JugadorCasilla(personajes.get(k).getPosX(), personajes.get(k).getPosY(), personajes.get(k));
                             cuadradosGLogico[moverX][moverY].setBorder(BorderFactory.createLineBorder(Color.RED));
                         } else {
                             JOptionPane.showMessageDialog(null, "Acción inválida. Cada personaje solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
@@ -725,22 +1137,22 @@ public class Tablero extends JFrame {
             else if (personajes.get(k) instanceof Arquero){
                 if (arqueroSeleccionado){
                     if (personajes.get(k).getDesplazamientoPorTurno()>0) {
-                        actualX = personajes.get(k).getX();
-                        actualY = personajes.get(k).getY();
+                        actualX = personajes.get(k).getPosX();
+                        actualY = personajes.get(k).getPosY();
                         if (isValidMove(actualX, actualY, moverX, moverY)) {
                             if (arqueroEncaramado){
-                                cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = respaldoCasilla;
-                                personajes.get(k).setX(moverX);
-                                personajes.get(k).setY(moverY);
+                                cuadradosGLogico[personajes.get(k).getPosX()][personajes.get(k).getPosY()] = respaldoCasilla;
+                                personajes.get(k).setPosX(moverX);
+                                personajes.get(k).setPosY(moverY);
                                 arqueroEncaramado = false;
                                 respaldoCasilla = null;
                             }
                             else {
-                                cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = new Casilla(personajes.get(k).getX(), personajes.get(k).getY());
-                                personajes.get(k).setX(moverX);
-                                personajes.get(k).setY(moverY);
+                                cuadradosGLogico[personajes.get(k).getPosX()][personajes.get(k).getPosY()] = new Casilla(personajes.get(k).getPosX(), personajes.get(k).getPosY());
+                                personajes.get(k).setPosX(moverX);
+                                personajes.get(k).setPosY(moverY);
                             }
-                            cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(k).getX(), personajes.get(k).getY(), personajes.get(k));
+                            cuadradosGLogico[personajes.get(k).getPosX()][personajes.get(k).getPosY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(k).getPosX(), personajes.get(k).getPosY(), personajes.get(k));
                             personajes.get(k).setDesplazamientoPorTurno(personajes.get(k).getDesplazamientoPorTurno() - 1);
                             cuadradosGLogico[moverX][moverY].setBorder(BorderFactory.createLineBorder(Color.RED));
                         }
@@ -757,14 +1169,14 @@ public class Tablero extends JFrame {
             else {
                 if (agenteSeleccionado) {
                     if (personajes.get(k).getDesplazamientoPorTurno() > 0) {
-                        actualX = personajes.get(k).getX();
-                        actualY = personajes.get(k).getY();
+                        actualX = personajes.get(k).getPosX();
+                        actualY = personajes.get(k).getPosY();
                         if (isValidMove(actualX, actualY, moverX, moverY)) {
-                            cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = new Casilla(personajes.get(k).getX(), personajes.get(k).getY());
-                            personajes.get(k).setX(moverX);
-                            personajes.get(k).setY(moverY);
+                            cuadradosGLogico[personajes.get(k).getPosX()][personajes.get(k).getPosY()] = new Casilla(personajes.get(k).getPosX(), personajes.get(k).getPosY());
+                            personajes.get(k).setPosX(moverX);
+                            personajes.get(k).setPosY(moverY);
                             personajes.get(k).setDesplazamientoPorTurno(personajes.get(k).getDesplazamientoPorTurno() - 1);
-                            cuadradosGLogico[personajes.get(k).getX()][personajes.get(k).getY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(k).getX(), personajes.get(k).getY(), personajes.get(k));
+                            cuadradosGLogico[personajes.get(k).getPosX()][personajes.get(k).getPosY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(k).getPosX(), personajes.get(k).getPosY(), personajes.get(k));
                             cuadradosGLogico[moverX][moverY].setBorder(BorderFactory.createLineBorder(Color.RED));
                         } else {
                             JOptionPane.showMessageDialog(null, "Acción inválida. Cada personaje solo se puede mover 1 casilla a la vez alrededor de sí mismo.");
@@ -791,7 +1203,7 @@ public class Tablero extends JFrame {
             Object botonPres = e.getSource();
             if (botonPres == botonTurno){
                 botonTurno.setEnabled(false);
-                System.out.println("Presionado");
+                turnoJugador();
             }
         }
     }

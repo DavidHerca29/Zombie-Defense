@@ -4,8 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class Personaje {
-    private int X;
-    private int Y;
+    private int posX;
+    private int posY;
     private ImageIcon dibujo;
     private int salud;
     private int armadura;
@@ -18,9 +18,9 @@ public abstract class Personaje {
     //private int ID;
 
 
-    public Personaje(int X, int Y, ImageIcon dibujo, int salud, int armadura, int experiencia, Arma arma, int ataquesPorTurno, int desplazamientoPorTurno) {
-        this.X = X;
-        this.Y = Y;
+    public Personaje(int posX, int posY, ImageIcon dibujo, int salud, int armadura, int experiencia, Arma arma, int ataquesPorTurno, int desplazamientoPorTurno) {
+        this.posX = posX;
+        this.posY = posY;
         this.dibujo = dibujo;
         this.salud = salud;
         this.armadura = armadura;
@@ -119,20 +119,20 @@ public abstract class Personaje {
         this.setSalud(this.getSalud()-danoRecibido);
     }
 
-    public int getX() {
-        return X;
+    public int getPosX() {
+        return posX;
     }
 
-    public void setX(int x) {
-        this.X = x;
+    public void setPosX(int posX) {
+        this.posX = posX;
     }
 
-    public int getY() {
-        return Y;
+    public int getPosY() {
+        return posY;
     }
 
-    public void setY(int y) {
-        this.Y = y;
+    public void setPosY(int posY) {
+        this.posY = posY;
     }
 
     public ImageIcon getDibujo() {
