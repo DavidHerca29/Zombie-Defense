@@ -10,7 +10,7 @@ public class Agente extends Personaje{
 
 
     public Agente(int posicionLinea, int posicionColumna) {
-        super(posicionLinea, posicionColumna, new ImageIcon("src/Imagenes/Agente.jpg"),110, 10, 0, new Pistola(), 1, 1);
+        super(posicionLinea, posicionColumna, new ImageIcon("src/Imagenes/Agente.jpg"),110, 35, 0, new Pistola(), 1, 1);
         this.setDibujo(scaleImage(getDibujo(),50,50));
     }
 

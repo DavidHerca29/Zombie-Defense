@@ -4,7 +4,7 @@ import javax.swing.*;
 
 public class ZombieSamurai extends Zombie{
     public ZombieSamurai(int posicionLinea, int posicionColumna) {
-        super(posicionLinea, posicionColumna, new ImageIcon("src/Imagenes/Zombie Samurai.jpg"), 140, 60, 3,1);
+        super(posicionLinea, posicionColumna, new ImageIcon("src/Imagenes/Zombie Samurai.jpg"), 140, 60, 2,1);
         this.setDibujo(scaleImage(getDibujo(),80,80));
     }
 

@@ -10,7 +10,7 @@ public class Arquero extends Personaje{
 
 
     public Arquero(int posicionLinea, int posicionColumna) {
-        super(posicionLinea, posicionColumna, new ImageIcon("src/Imagenes/Arquero.png"), 70,5,0, new Arco(),1,1);
+        super(posicionLinea, posicionColumna, new ImageIcon("src/Imagenes/Arquero.png"), 70,20,0, new Arco(),1,1);
         this.setDibujo(scaleImage(getDibujo(),50,50));
     }
 

@@ -115,7 +115,7 @@ public abstract class Personaje {
     }
 
     public void RecibirDano(int danoRecibido){
-        danoRecibido = danoRecibido*this.armadura/100;
+        danoRecibido = danoRecibido - (danoRecibido*this.armadura/100);
         this.setSalud(this.getSalud()-danoRecibido);
     }
 
