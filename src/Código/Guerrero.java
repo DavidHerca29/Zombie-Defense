@@ -8,7 +8,7 @@ public class Guerrero extends Personaje{
     private boolean evadirAtaque=false;
 
     public Guerrero(int posicionLinea, int posicionColumna) {
-        super(posicionLinea, posicionColumna, new ImageIcon("src/Imagenes/Guerrero1.png"), 180,60, 0, new Bate(),1,3);
+        super(posicionLinea, posicionColumna, new ImageIcon("src/Imagenes/Guerrero1.png"), 180,50, 0, new Bate(),1,3);
         this.setDibujo(scaleImage(getDibujo(),50,50));
     }
     // DEBO PONER LA IMAGEN POR CADA PERSONAJE

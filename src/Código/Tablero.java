@@ -1645,18 +1645,46 @@ public class Tablero extends JFrame {
             add(botonTurno);
         }
         private void actualizarPaneles(){
+            boolean guerreroExiste=false;
+            boolean arqueroExiste=false;
+            boolean agenteExiste=false;
             for (int i = 0; i<personajes.size(); i++){
-                if (personajes.get(i) instanceof Guerrero) {
+                if (personajes.get(i) instanceof Guerrero)
+                    guerreroExiste = true;
+                else if (personajes.get(i) instanceof Arquero)
+                    arqueroExiste = true;
+                else if (personajes.get(i) instanceof Agente)
+                    agenteExiste = true;
+            }
+            for (int i = 0; i<personajes.size(); i++){
+                if (!guerreroExiste) {
+                    saludGuerrero.setText("   El Guerrero ha muerto.");
+                    ataqueGuerrero.setText("Ataque del guerrero: 0");
+                    nivelGuerrero.setText("Nivel del guerrero: 0");
+                }
+                else if (!arqueroExiste){
+                    saludArquero.setText("   El Arquero ha muerto.");
+                    ataqueArquero.setText("Ataque del arquero: 0");
+                    nivelArquero.setText("Nivel del arquero: 0");
+                }
+                else if (!agenteExiste){
+                    saludAgente.setText("   El Agente ha muerto.");
+                    ataqueAgente.setText("Ataque del agente: 0");
+                    nivelAgente.setText("Nivel del agente: 0");
+                }
+            }
+            for (int i = 0; i<personajes.size(); i++){
+                if (personajes.get(i) instanceof Guerrero && guerreroExiste) {
                     saludGuerrero.setText("Salud del guerrero: " + personajes.get(i).getSalud());
                     ataqueGuerrero.setText("Ataque del guerrero: " + personajes.get(i).getArma().getDano());
                     nivelGuerrero.setText("Nivel del guerrero: " + personajes.get(i).getNivel());
                 }
-                else if (personajes.get(i) instanceof Arquero) {
+                else if (personajes.get(i) instanceof Arquero && arqueroExiste) {
                     saludArquero.setText("Salud del arquero: " + personajes.get(i).getSalud());
                     ataqueArquero.setText("Ataque del arquero: " + personajes.get(i).getArma().getDano());
-                    nivelArquero.setText("Nivel del aruqero: " + personajes.get(i).getNivel());
+                    nivelArquero.setText("Nivel del arquero: " + personajes.get(i).getNivel());
                 }
-                else {
+                else if (personajes.get(i) instanceof Agente && agenteExiste){
                     saludAgente.setText("Salud del agente: " + personajes.get(i).getSalud());
                     ataqueAgente.setText("Ataque del agente: " + personajes.get(i).getArma().getDano());
                     nivelAgente.setText("Nivel del agente: " + personajes.get(i).getNivel());
