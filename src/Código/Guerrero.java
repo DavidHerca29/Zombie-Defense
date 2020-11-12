@@ -8,7 +8,7 @@ public class Guerrero extends Personaje{
     private boolean evadirAtaque=false;
 
     public Guerrero(int posicionLinea, int posicionColumna) {
-        super(posicionLinea, posicionColumna, new ImageIcon("src/Imagenes/Guerrero1.png"), 150,60, 0, new Maza(),1,1);
+        super(posicionLinea, posicionColumna, new ImageIcon("src/Imagenes/Guerrero1.png"), 180,60, 0, new Bate(),1,3);
         this.setDibujo(scaleImage(getDibujo(),50,50));
     }
     // DEBO PONER LA IMAGEN POR CADA PERSONAJE
@@ -39,6 +39,20 @@ public class Guerrero extends Personaje{
     }
 
     @Override
+    public void aumentarNivel(int masExperiencia) {
+        this.setExperiencia(this.getExperiencia()+masExperiencia);
+        if (this.getExperiencia()<15)
+            setNivel(1);
+        else if (15<=this.getExperiencia() && this.getExperiencia()<35)
+            setNivel(2);
+        else if (35<=this.getExperiencia() && this.getExperiencia()<60) {
+            setNivel(3);
+        }
+        else setNivel(4);
+        this.actualizarNivel();
+    }
+
+    @Override
     public void resetTurno() {
         if (habAtacarDoble){
             setAtaquesPorTurno(2);
@@ -46,7 +60,7 @@ public class Guerrero extends Personaje{
         else {
             setAtaquesPorTurno(1);
         }
-        setDesplazamientoPorTurno(1);
+        setDesplazamientoPorTurno(3);
     }
 
     @Override
@@ -59,5 +73,12 @@ public class Guerrero extends Personaje{
                     this.setHabAtacarDoble(true);
             }
         }
+        actualizarArma();
+    }
+    public void actualizarArma() {
+        if (this.getNivel()==3)
+            this.setArma(new Maza());
+        else if (this.getNivel()==4)
+            this.setArma(new Sierra());
     }
 }

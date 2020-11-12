@@ -75,20 +75,9 @@ public abstract class Personaje {
 
         return new ImageIcon(icon.getImage().getScaledInstance(nw, nh, Image.SCALE_DEFAULT));
     }
-    public void aumentarNivel(int masExperiencia){
-        this.setExperiencia(this.getExperiencia()+masExperiencia);
-        if (this.getExperiencia()<15)
-            setNivel(1);
-        else if (15<=this.getExperiencia() && this.getExperiencia()<35)
-            setNivel(2);
-        else if (35<=this.getExperiencia() && this.getExperiencia()<60) {
-            setNivel(3);
-        }
-        else setNivel(4);
-        this.actualizarNivel();
-    }
+    public abstract void aumentarNivel(int masExperiencia);
     public abstract void actualizarNivel();
-
+    public abstract void actualizarArma();
 
     public Arma getArma() {
         return arma;
@@ -158,5 +147,4 @@ public abstract class Personaje {
     public void setArmadura(int armadura) {
         this.armadura = armadura;
     }
-    public void calcularNivel(){}
 }

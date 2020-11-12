@@ -45,6 +45,27 @@ public class Arquero extends Personaje{
     }
 
     @Override
+    public void actualizarArma() {
+        if (this.getNivel()==3)
+            this.setArma(new Francotirador());
+    }
+
+    @Override
+    public void aumentarNivel(int masExperiencia) {
+        this.setExperiencia(this.getExperiencia()+masExperiencia);
+        if (this.getExperiencia()<15)
+            setNivel(1);
+        else if (15<=this.getExperiencia() && this.getExperiencia()<35)
+            setNivel(2);
+        else if (35<=this.getExperiencia() && this.getExperiencia()<60) {
+            setNivel(3);
+        }
+        else setNivel(4);
+        this.actualizarNivel();
+
+    }
+
+    @Override
     public void actualizarNivel() {
         if (this.getNivel()>=2){
             this.setDanoCritico(true);
@@ -54,5 +75,6 @@ public class Arquero extends Personaje{
                     this.setMenosRuido(true);
             }
         }
+        actualizarArma();
     }
 }

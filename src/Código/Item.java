@@ -51,7 +51,7 @@ class Bebida extends Item{
 class Insignia extends Item{
     private int masExperiencia = 10;
     public Insignia() {
-        super(new ImageIcon("src/Imagenes/Insignia"));
+        super(new ImageIcon("src/Imagenes/Insignia.jpg"));
         this.setImagen(scaleImage(getImagen(),50,50));
     }
 
@@ -65,7 +65,7 @@ class Insignia extends Item{
 }
 class Energia extends Item{
     public Energia() {
-        super(new ImageIcon("src/Imaagenes/Energia"));
+        super(new ImageIcon("src/Imagenes/Energia.jpg"));
         this.setImagen(scaleImage(getImagen(),50,50));
     }
 }

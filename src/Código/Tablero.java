@@ -10,17 +10,16 @@ public class Tablero extends JFrame {
 
     protected JButton botonTurno = new JButton("Terminar Turno");
 
-    private Casilla[][] cuadradosGLogico = new Casilla[12][12];
-    private JButton[][] botonesGraficos = new JButton[12][12];
-    private JInternalFrame panelContenedor = new JInternalFrame();
+    private final Casilla[][] cuadradosGLogico = new Casilla[12][12];
+    private final JButton[][] botonesGraficos = new JButton[12][12];
+    private final JInternalFrame panelContenedor = new JInternalFrame();
 
-    private ArrayList<Personaje> personajes = new ArrayList<Personaje>();
-    private ArrayList<Item> items = new ArrayList<Item>();
-    private ArrayList<Zombie> zombies = new ArrayList<Zombie>();
-    private ArrayList<SpawningPoint> spawningPoints = new ArrayList<SpawningPoint>();
+    private final ArrayList<Personaje> personajes = new ArrayList<Personaje>();
+    private final ArrayList<Zombie> zombies = new ArrayList<Zombie>();
+    private final ArrayList<SpawningPoint> spawningPoints = new ArrayList<SpawningPoint>();
 
-    private ClickJugadorHandler clickJugadorHandler = new ClickJugadorHandler();
-    private PanelStats statsPanel = new PanelStats();
+    private final ClickJugadorHandler clickJugadorHandler = new ClickJugadorHandler();
+    private final PanelStats statsPanel = new PanelStats();
 
     private int turno = 0;
     private boolean guerreroSeleccionado = false;
@@ -78,18 +77,47 @@ public class Tablero extends JFrame {
             statsPanel.registroResultados.append("¡¡¡ FELICIDADES, HAS SOBREVIVIDO A 15 OLEADAS !!!");
         }
         else {
-            if (turno%2==0){
-                nuevoSpawn();
+            if (!verificarBase()){
+                botonTurno.setEnabled(false);
+                JOptionPane.showMessageDialog(null, "¡¡¡ NOOO UN ZOMBIE HA PENETRADO DENTRO DE LA BASEE !!!");
+                for (int f=0;f<12;f++) {
+                    for (int c = 0; c < 12; c++) {
+                        cuadradosGLogico[f][c].setEnabled(false);
+                        botonesGraficos[f][c].setEnabled(false);
+                    }
+                }
+                // habilitar boton reinicio juego
+                statsPanel.registroResultados.append("¡¡¡ NOOO UN ZOMBIE HA PENETRADO DENTRO DE LA BASEE !!!");
             }
-            accionZombies();
-            activarSpawningP();
-            reiniciarRuido();
+            else {
+                if (turno%2==0){
+                    nuevoSpawn();
+                }
+                accionZombies();
+                activarSpawningP();
+                reiniciarRuido();
+                botonTurno.setEnabled(true);
+                statsPanel.registroResultados.append("Ha iniciado el turno "+turno+".\n");
+            }
+
         }
-        for (int p=0;p<personajes.size();p++){
-            personajes.get(p).resetTurno();
+        for (Personaje personaje : personajes) {
+            personaje.resetTurno();
         }
-        botonTurno.setEnabled(true);
-        statsPanel.registroResultados.append("Ha iniciado el turno "+turno+".\n");
+
+    }
+
+    private boolean verificarBase() {
+        for (int i=0;i<12;i++){
+            for (int j=0;j<12;j++){
+                if (cuadradosGLogico[i][j] instanceof Base){
+                    panelContenedor.setBounds(300, -30, 925, 726);
+                    return true;
+                }
+            }
+        }
+        panelContenedor.setBounds(300, -30, 925, 726);
+        return false;
     }
 
     private void nuevoSpawn() {
@@ -109,8 +137,8 @@ public class Tablero extends JFrame {
     }
 
     private void reiniciarRuido() {
-        for (int p=0;p<personajes.size();p++){
-            personajes.get(p).setRuidoActivo(0);
+        for (Personaje personaje : personajes) {
+            personaje.setRuidoActivo(0);
         }
     }
     private int obtenerDistancia(int punto1X, int punto1Y, int punto2X, int punto2Y){
@@ -232,54 +260,54 @@ public class Tablero extends JFrame {
                     // 1 Oeste, 2 Este, 3 Norte, 4 Sur, 5 NorOeste, 6 NorEste, 7 SurOeste, 8 SurEste
                     // 1 superior izquierda. 2 superior derecha. 3 inferior izquierda. 4 inferior derecha. 5 borde superior, 6 borde inferior, 7 borde izquierdo, 8 borde derecho, 9 centro.
                     case 1:
-                        if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
                         }
                         break;
                     case 2:
                     case 5:
-                        if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oeste
                         }
-                        else if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() - 1)) {
+                        else if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // SurOeste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1);
                         }
-                        else if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
+                        else if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
                         }
                         break;
                     case 3:
-                        if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
                         }
                         break;
                     case 4:
                     case 6:
-                        if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oeste
                         }
-                        else if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() - 1)) {
+                        else if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // NorOeste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1);
                         }
-                        else if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
+                        else if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
                         }
                         break;
                     case 8:
                     case 9: // QUEDE EN VALIDAR TODAS LAS POSICIONES DE LOS ZOMBIES PARA QUE NO SE SALGA DEL INDICE
-                        if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oeste
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() - 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // NorOeste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1);
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() - 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // SurOeste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1);
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
                         } else break;
                     break;
@@ -289,59 +317,59 @@ public class Tablero extends JFrame {
                 switch (posZombie) {
                     case 1:
                     case 5:
-                        if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
                         }
-                        else if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() + 1)) {
+                        else if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // SurEste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1);
                         }
-                        else if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
+                        else if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
                         }
                         break;
                     case 2:
-                        if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
                         }
                         break;
                     case 3:
                     case 6:
-                        if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() + 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // NorEste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1);
                         }
-                        else if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
+                        else if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
                         }
                         break;
                     case 4:
-                        if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
                         }
                         break;
                     case 8:
-                        if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
                         }
                         break;
                     case 7:
                     case 9:
-                        if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() + 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // NorEste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1);
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() + 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // SurEste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1);
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
                         } else break;
                         break;
@@ -350,61 +378,61 @@ public class Tablero extends JFrame {
             case 3:
                 switch (posZombie) {
                     case 1:
-                        if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
                         }
                         break;
                     case 2:
-                        if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oste
                         }
                         break;
                     case 3:
                     case 7:
-                        if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
                         }
-                        else if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() + 1)) {
+                        else if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // NorEste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1);
                         }
-                        else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
+                        else if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
                         }
                         break;
                     case 4:
                     case 8:
-                        if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
                         }
-                        else if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() - 1)) {
+                        else if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // NorOeste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1);
                         }
-                        else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
+                        else if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oste
                         }
                         break;
                     case 5:
-                        if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oste
-                        } else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
                         }
                         break;
                     case 6:
                     case 9:
-                        if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() - 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // NorOeste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1);
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() + 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // NorEste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1);
-                        } else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oste
-                        } else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
                         } else break;
                         break;
@@ -414,58 +442,58 @@ public class Tablero extends JFrame {
                 switch (posZombie) {
                     case 1:
                     case 7:
-                        if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() + 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // SurEste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1);
                         }
-                        else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
+                        else if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
                         }
                         break;
                     case 2:
                     case 8:
-                        if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
                         }
-                        else if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() - 1)) {
+                        else if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // SurOeste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1);
-                        } else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oste
                         }
                         break;
                     case 3:
-                        if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
                         }
                         break;
                     case 4:
-                        if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oste
                         }
                         break;
                     case 6:
-                        if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oste
-                        } else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
                         }
                         break;
                     case 5:
                     case 9:
-                        if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() + 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // SurEste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1);
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() - 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // SurOeste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1);
-                        } else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oste
-                        } else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
                         } else break;
                         break;
@@ -475,13 +503,13 @@ public class Tablero extends JFrame {
                 switch (posZombie) {
                     case 2:
                     case 5:
-                        if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oeste
                         }
                         break;
                     case 3:
                     case 7:
-                        if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
                         }
                         break;
@@ -489,12 +517,12 @@ public class Tablero extends JFrame {
                     case 6:
                     case 4:
                     case 9:
-                        if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() - 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // NorOeste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1);
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
-                        } else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oeste
                         } else break;
                         break;
@@ -505,13 +533,13 @@ public class Tablero extends JFrame {
                 switch (posZombie) {
                     case 1:
                     case 5:
-                        if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
                         }
                         break;
                     case 4:
                     case 8:
-                        if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
                         }
                         break;
@@ -519,12 +547,12 @@ public class Tablero extends JFrame {
                     case 6:
                     case 3:
                     case 9:
-                        if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() + 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // NorEste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1);
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() - 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() - 1); // Norte
-                        } else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
                         } else break;
                         break;
@@ -535,13 +563,13 @@ public class Tablero extends JFrame {
                 switch (posZombie) {
                     case 1:
                     case 7:
-                        if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
                         }
                         break;
                     case 4:
                     case 6:
-                        if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oeste
                         }
                         break;
@@ -549,12 +577,12 @@ public class Tablero extends JFrame {
                     case 5:
                     case 2:
                     case 9:
-                        if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() - 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // SurOeste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1);
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
-                        } else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() - 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() - 1); // Oeste
                         } else break;
                         break;
@@ -564,13 +592,13 @@ public class Tablero extends JFrame {
                 switch (posZombie) {
                     case 2:
                     case 8:
-                        if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
                         }
                         break;
                     case 3:
                     case 6:
-                        if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
                         }
                         break;
@@ -578,12 +606,12 @@ public class Tablero extends JFrame {
                     case 5:
                     case 9:
                     case 1:
-                        if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() + 1)) {
+                        if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // SurEste
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1);
-                        } else if (validarCasillaHab(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX() + 1, zombies.get(z).getPosY())) {
                             zombies.get(z).setPosX(zombies.get(z).getPosX() + 1); // Sur
-                        } else if (validarCasillaHab(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
+                        } else if (validarCasillaHabZom(zombies.get(z).getPosX(), zombies.get(z).getPosY() + 1)) {
                             zombies.get(z).setPosY(zombies.get(z).getPosY() + 1); // Este
                         } else break;
                         break;
@@ -606,7 +634,7 @@ public class Tablero extends JFrame {
             return 5;
         else if (actualY<destinoY && actualX>destinoX)
             return 6;
-        else if (actualY>destinoY && actualX<destinoX)
+        else if (actualY>destinoY)
             return 7;
         else
             return 8;
@@ -675,6 +703,13 @@ public class Tablero extends JFrame {
     }
     private boolean validarCasillaHab(int posX, int posY){
         if (cuadradosGLogico[posX][posY] instanceof JugadorCasilla || cuadradosGLogico[posX][posY] instanceof ZombieCasilla || cuadradosGLogico[posX][posY] instanceof ItemCasilla ||cuadradosGLogico[posX][posY] instanceof SpawningPoint || cuadradosGLogico[posX][posY] instanceof Base || cuadradosGLogico[posX][posY] instanceof Montaña || cuadradosGLogico[posX][posY] instanceof Escombro){
+            return false;
+        }
+        else
+            return true;
+    }
+    private boolean validarCasillaHabZom(int posX, int posY){
+        if (cuadradosGLogico[posX][posY] instanceof JugadorCasilla || cuadradosGLogico[posX][posY] instanceof ZombieCasilla || cuadradosGLogico[posX][posY] instanceof ItemCasilla ||cuadradosGLogico[posX][posY] instanceof SpawningPoint || cuadradosGLogico[posX][posY] instanceof Montaña || cuadradosGLogico[posX][posY] instanceof Escombro){
             return false;
         }
         else
@@ -1040,7 +1075,7 @@ public class Tablero extends JFrame {
                         }
                     }
                 }
-                else {
+                else if(agenteSeleccionado){
                     if (personajes.get(i) instanceof Agente) {
                         if (personajes.get(i).getDesplazamientoPorTurno()>0){
                             actualX = personajes.get(i).getPosX();
@@ -1164,8 +1199,10 @@ public class Tablero extends JFrame {
                                         personajes.get(i).setRuidoActivo(personajes.get(i).getArma().getRuido());
                                         if (zombies.get(z).getSalud()<=0){
                                             //se añade algoritmo de item
-                                            cuadradosGLogico[atacarX][atacarY] = new Casilla(atacarX, atacarY);
                                             zombies.remove(z);
+                                            cuadradosGLogico[atacarX][atacarY] = dropItem(atacarX, atacarY);
+                                            personajes.get(i).aumentarNivel(8);
+                                            personajes.get(i).actualizarNivel();
                                             statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie y lo ha eliminado.\n");
                                         }
                                         else {
@@ -1196,12 +1233,20 @@ public class Tablero extends JFrame {
                                 personajes.get(i).setAtaquesPorTurno(personajes.get(i).getAtaquesPorTurno()-1);
                                 for (int z=0;z<zombies.size();z++){
                                     if (zombies.get(z).getPosX()==atacarX && zombies.get(z).getPosY() == atacarY){
-                                        zombies.get(z).recibirDano(personajes.get(i).getArma().getDano());
-                                        personajes.get(i).setRuidoActivo(personajes.get(i).getArma().getRuido());
+                                        if (((Arquero) personajes.get(i)).isDanoCritico())
+                                            zombies.get(z).recibirDano(personajes.get(i).getArma().getDano()+personajes.get(i).getArma().getDano()*30/100);
+                                        else
+                                            zombies.get(z).recibirDano(personajes.get(i).getArma().getDano());
+                                        if (((Arquero) personajes.get(i)).isMenosRuido())
+                                            personajes.get(i).setRuidoActivo(personajes.get(i).getArma().getRuido()-personajes.get(i).getArma().getRuido()*40/100);
+                                        else
+                                            personajes.get(i).setRuidoActivo(personajes.get(i).getArma().getRuido());
                                         if (zombies.get(z).getSalud()<=0){
                                             //se añade algoritmo de item
-                                            cuadradosGLogico[atacarX][atacarY] = new Casilla(atacarX, atacarY);
+                                            cuadradosGLogico[atacarX][atacarY] = dropItem(atacarX, atacarY);
                                             zombies.remove(z);
+                                            personajes.get(i).aumentarNivel(8);
+                                            personajes.get(i).actualizarNivel();
                                             statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie y lo ha eliminado.\n");
                                         }
                                         else {
@@ -1236,8 +1281,10 @@ public class Tablero extends JFrame {
                                         personajes.get(i).setRuidoActivo(personajes.get(i).getArma().getRuido());
                                         if (zombies.get(z).getSalud()<=0){
                                             //se añade algoritmo de item
-                                            cuadradosGLogico[atacarX][atacarY] = new Casilla(atacarX, atacarY);
+                                            cuadradosGLogico[atacarX][atacarY] = dropItem(atacarX, atacarY);
                                             zombies.remove(z);
+                                            personajes.get(i).aumentarNivel(8);
+                                            personajes.get(i).actualizarNivel();
                                             statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie y lo ha eliminado.\n");
                                         }
                                         else {
@@ -1263,6 +1310,17 @@ public class Tablero extends JFrame {
         else
             JOptionPane.showMessageDialog(null,"Seleccione a un personaje amistoso para atacar a un zombie.");
     }
+
+    private ItemCasilla dropItem(int posX, int posY) {
+        int numAleatorio = (int) Math.floor(Math.random() * (100));
+        if (numAleatorio%3==0)
+            return new ItemCasilla(posX, posY, new Bebida());
+        else if (numAleatorio%3==1)
+            return new ItemCasilla(posX, posY, new Energia());
+        else
+            return new ItemCasilla(posX, posY, new Insignia());
+    }
+
     private void SpawPSelect(int moverX, int moverY){
         int actualX;
         int actualY;

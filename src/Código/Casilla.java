@@ -135,4 +135,3 @@ class ItemCasilla extends Casilla{
         this.item = item;
     }
 }
-

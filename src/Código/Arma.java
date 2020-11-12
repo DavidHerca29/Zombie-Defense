@@ -53,41 +53,40 @@ public abstract class Arma {
         this.ruido = ruido;
     }
 }
-class Hacha extends Arma{
-
-    public Hacha() {
-        super(60, 2, 1);
-    }
-}
 class Arco extends Arma{
 
     public Arco() {
-        super(42, 0, 6);
+        super(62, 0, 6);
     }
 }
 class Sierra extends Arma{
 
     public Sierra() {
-        super(85, 8, 2);
+        super(115, 8, 2);
+    }
+}
+class Rifle extends Arma{
+    public Rifle() {
+        super(98, 5, 6);
     }
 }
 class Pistola extends Arma{
     public Pistola() {
-        super(55, 6, 7);
+        super(75, 4, 4);
     }
 }
 class Bate extends Arma{
     public Bate() {
-        super(38, 3, 1);
+        super(68, 3, 1);
     }
 }
 class Francotirador extends Arma{
     public Francotirador() {
-        super(120, 12, 10);
+        super(150, 12, 10);
     }
 }
 class Maza extends Arma{
     public Maza() {
-        super(48, 3, 1);
+        super(92, 3, 1);
     }
 }
