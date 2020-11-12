@@ -81,4 +81,8 @@ public class Guerrero extends Personaje{
         else if (this.getNivel()==4)
             this.setArma(new Sierra());
     }
+    public boolean evadir(){
+        int numAleatorioX = (int) Math.floor(Math.random() * (100));
+        return numAleatorioX % 3 != 0;
+    }
 }

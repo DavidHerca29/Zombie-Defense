@@ -155,8 +155,33 @@ public class Tablero extends JFrame {
             indicePersonaje = PersonajeRangoAtaqueZ(zombies.get(z).getPosX(), zombies.get(z).getPosY(),zombies.get(z).getRangoAtaque());
             if (indicePersonaje>=0){
                 danoRecibido = personajes.get(indicePersonaje).getSalud();
-                personajes.get(indicePersonaje).RecibirDano(zombies.get(z).getAtaque());
-                registrarAtaqueZombie(zombies.get(z), personajes.get(indicePersonaje), danoRecibido-personajes.get(indicePersonaje).getSalud());
+                if (personajes.get(indicePersonaje)instanceof Guerrero){
+                    if (((Guerrero) personajes.get(indicePersonaje)).isEvadirAtaque()){
+                        if (((Guerrero) personajes.get(indicePersonaje)).evadir())
+                            JOptionPane.showMessageDialog(null, "El guerrero ha evadido el ataque de un zombie gracias a su habilidad!");
+                        else if (((Guerrero) personajes.get(indicePersonaje)).isHabAmortiguar()) {
+                            personajes.get(indicePersonaje).RecibirDano(zombies.get(z).getAtaque() - zombies.get(z).getAtaque() * 20 / 100);
+                            registrarAtaqueZombie(zombies.get(z), personajes.get(indicePersonaje), danoRecibido - personajes.get(indicePersonaje).getSalud());
+                        }
+                        else {
+                            personajes.get(indicePersonaje).RecibirDano(zombies.get(z).getAtaque());
+                            registrarAtaqueZombie(zombies.get(z), personajes.get(indicePersonaje), danoRecibido - personajes.get(indicePersonaje).getSalud());
+                        }
+
+                    }
+                    else if (((Guerrero) personajes.get(indicePersonaje)).isHabAmortiguar()){
+                        personajes.get(indicePersonaje).RecibirDano(zombies.get(z).getAtaque() - zombies.get(z).getAtaque() * 20 / 100);
+                        registrarAtaqueZombie(zombies.get(z), personajes.get(indicePersonaje), danoRecibido - personajes.get(indicePersonaje).getSalud());
+                    }
+                    else {
+                        personajes.get(indicePersonaje).RecibirDano(zombies.get(z).getAtaque());
+                        registrarAtaqueZombie(zombies.get(z), personajes.get(indicePersonaje), danoRecibido - personajes.get(indicePersonaje).getSalud());
+                    }
+                }
+                else {
+                    personajes.get(indicePersonaje).RecibirDano(zombies.get(z).getAtaque());
+                    registrarAtaqueZombie(zombies.get(z), personajes.get(indicePersonaje), danoRecibido - personajes.get(indicePersonaje).getSalud());
+                }
                 verificarMuertePersonaje();
             }
             else {
