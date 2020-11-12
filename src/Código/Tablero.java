@@ -29,7 +29,7 @@ public class Tablero extends JFrame {
     private boolean obstaculoEnMedio = false;
     private Casilla respaldoCasilla;
 
-    public Tablero(){
+    public Tablero() throws InterruptedException {
         setSize( 1235, 726);
         setResizable(false);
         setVisible(true);
@@ -61,12 +61,11 @@ public class Tablero extends JFrame {
         add(statsPanel);
         turnoJugador();
     }
-    private void turnoJugador(){
+    private void turnoJugador() throws InterruptedException {
         turno++;
-        statsPanel.actualizarPaneles();
-        if (turno>15){
+        if (turno>20){
             botonTurno.setEnabled(false);
-            JOptionPane.showMessageDialog(null, "¡¡¡ FELICIDADES, HAS SOBREVIVIDO A 15 OLEADAS !!!");
+            JOptionPane.showMessageDialog(null, "¡¡¡ FELICIDADES, HAS SOBREVIVIDO A 20 OLEADAS !!!");
             for (int f=0;f<12;f++) {
                 for (int c = 0; c < 12; c++) {
                     cuadradosGLogico[f][c].setEnabled(false);
@@ -74,11 +73,20 @@ public class Tablero extends JFrame {
                 }
             }
             // habilitar boton reinicio juego
-            statsPanel.registroResultados.append("¡¡¡ FELICIDADES, HAS SOBREVIVIDO A 15 OLEADAS !!!");
+            statsPanel.registroResultados.append("¡¡¡ FELICIDADES, HAS SOBREVIVIDO A 20 OLEADAS !!!");
         }
         else {
+
+            if (!personajes.isEmpty()) {
+                botonTurno.setEnabled(true);
+                if (turno % 2 == 0) {
+                    nuevoSpawn();
+                }
+                accionZombies();
+                activarSpawningP();
+                reiniciarRuido();
+            }
             if (!verificarBase()){
-                botonTurno.setEnabled(false);
                 JOptionPane.showMessageDialog(null, "¡¡¡ NOOO UN ZOMBIE HA PENETRADO DENTRO DE LA BASEE !!!");
                 for (int f=0;f<12;f++) {
                     for (int c = 0; c < 12; c++) {
@@ -88,23 +96,15 @@ public class Tablero extends JFrame {
                 }
                 // habilitar boton reinicio juego
                 statsPanel.registroResultados.append("¡¡¡ NOOO UN ZOMBIE HA PENETRADO DENTRO DE LA BASEE !!!");
-            }
-            else {
-                if (turno%2==0){
-                    nuevoSpawn();
-                }
-                accionZombies();
-                activarSpawningP();
-                reiniciarRuido();
-                botonTurno.setEnabled(true);
-                statsPanel.registroResultados.append("Ha iniciado el turno "+turno+".\n");
+                botonTurno.setEnabled(false);
             }
 
         }
+        statsPanel.registroResultados.append("Ha iniciado el turno "+turno+".\n");
         for (Personaje personaje : personajes) {
             personaje.resetTurno();
         }
-
+        statsPanel.actualizarPaneles();
     }
 
     private boolean verificarBase() {
@@ -146,7 +146,7 @@ public class Tablero extends JFrame {
         dist = (int) Math.pow(Math.pow(punto2X-punto1X,2)+Math.pow(punto2Y-punto1Y, 2), 0.5);
         return dist;
     }
-    private void accionZombies(){
+    private void accionZombies() throws InterruptedException {
         int indicePersonaje;
         int danoRecibido;
         int indiceBaseX;
@@ -263,13 +263,13 @@ public class Tablero extends JFrame {
             statsPanel.registroResultados.append("¡¡¡NOO, han muerto todos tus personajes!!!");
             // habilitar reinicio de juego
             JOptionPane.showMessageDialog(null, "¡¡¡NOO, han muerto todos tus personajes!!!");
-            botonTurno.setEnabled(false);
             for (int f=0;f<12;f++) {
                 for (int c = 0; c < 12; c++) {
                     cuadradosGLogico[f][c].setEnabled(false);
                     botonesGraficos[f][c].setEnabled(false);
                 }
             }
+            botonTurno.setEnabled(false);
         }
         ActualizarTablero();
     }
@@ -1224,10 +1224,15 @@ public class Tablero extends JFrame {
                                         personajes.get(i).setRuidoActivo(personajes.get(i).getArma().getRuido());
                                         if (zombies.get(z).getSalud()<=0){
                                             //se añade algoritmo de item
-                                            zombies.remove(z);
                                             cuadradosGLogico[atacarX][atacarY] = dropItem(atacarX, atacarY);
-                                            personajes.get(i).aumentarNivel(8);
+                                            if (zombies.get(z) instanceof ZombieBasico)
+                                                personajes.get(i).aumentarNivel(3);
+                                            else if (zombies.get(z) instanceof ZombieCorredor)
+                                                personajes.get(i).aumentarNivel(5);
+                                            else
+                                                personajes.get(i).aumentarNivel(7);
                                             personajes.get(i).actualizarNivel();
+                                            zombies.remove(z);
                                             statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie y lo ha eliminado.\n");
                                         }
                                         else {
@@ -1269,8 +1274,13 @@ public class Tablero extends JFrame {
                                         if (zombies.get(z).getSalud()<=0){
                                             //se añade algoritmo de item
                                             cuadradosGLogico[atacarX][atacarY] = dropItem(atacarX, atacarY);
+                                            if (zombies.get(z) instanceof ZombieBasico)
+                                                personajes.get(i).aumentarNivel(3);
+                                            else if (zombies.get(z) instanceof ZombieCorredor)
+                                                personajes.get(i).aumentarNivel(5);
+                                            else
+                                                personajes.get(i).aumentarNivel(7);
                                             zombies.remove(z);
-                                            personajes.get(i).aumentarNivel(8);
                                             personajes.get(i).actualizarNivel();
                                             statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie y lo ha eliminado.\n");
                                         }
@@ -1307,8 +1317,13 @@ public class Tablero extends JFrame {
                                         if (zombies.get(z).getSalud()<=0){
                                             //se añade algoritmo de item
                                             cuadradosGLogico[atacarX][atacarY] = dropItem(atacarX, atacarY);
+                                            if (zombies.get(z) instanceof ZombieBasico)
+                                                personajes.get(i).aumentarNivel(3);
+                                            else if (zombies.get(z) instanceof ZombieCorredor)
+                                                personajes.get(i).aumentarNivel(5);
+                                            else
+                                                personajes.get(i).aumentarNivel(7);
                                             zombies.remove(z);
-                                            personajes.get(i).aumentarNivel(8);
                                             personajes.get(i).actualizarNivel();
                                             statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie y lo ha eliminado.\n");
                                         }
@@ -1542,7 +1557,11 @@ public class Tablero extends JFrame {
             Object botonPres = e.getSource();
             if (botonPres == botonTurno){
                 botonTurno.setEnabled(false);
-                turnoJugador();
+                try {
+                    turnoJugador();
+                } catch (InterruptedException interruptedException) {
+                    interruptedException.printStackTrace();
+                }
             }
         }
     }
