@@ -46,7 +46,7 @@ public class Arquero extends Personaje{
 
     @Override
     public void actualizarArma() {
-        if (this.getNivel()==3)
+        if (this.getNivel()==4)
             this.setArma(new Francotirador());
     }
 

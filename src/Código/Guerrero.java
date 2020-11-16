@@ -66,9 +66,9 @@ public class Guerrero extends Personaje{
     @Override
     public void actualizarNivel() {
         if (this.getNivel()>=2){
-            this.setEvadirAtaque(true);
+            this.setHabAmortiguar(true);
             if (this.getNivel()>=3){
-                this.setHabAmortiguar(true);
+                this.setEvadirAtaque(true);
                 if (this.getNivel()==4)
                     this.setHabAtacarDoble(true);
             }
@@ -83,6 +83,6 @@ public class Guerrero extends Personaje{
     }
     public boolean evadir(){
         int numAleatorioX = (int) Math.floor(Math.random() * (100));
-        return numAleatorioX % 3 != 0;
+        return numAleatorioX % 3 == 0;
     }
 }

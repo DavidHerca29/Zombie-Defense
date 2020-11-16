@@ -146,7 +146,7 @@ public class Tablero extends JFrame {
         dist = (int) Math.pow(Math.pow(punto2X-punto1X,2)+Math.pow(punto2Y-punto1Y, 2), 0.5);
         return dist;
     }
-    private void accionZombies() throws InterruptedException {
+    private void accionZombies() {
         int indicePersonaje;
         int danoRecibido;
         int indiceBaseX;
@@ -157,10 +157,12 @@ public class Tablero extends JFrame {
                 danoRecibido = personajes.get(indicePersonaje).getSalud();
                 if (personajes.get(indicePersonaje)instanceof Guerrero){
                     if (((Guerrero) personajes.get(indicePersonaje)).isEvadirAtaque()){
-                        if (((Guerrero) personajes.get(indicePersonaje)).evadir())
-                            JOptionPane.showMessageDialog(null, "El guerrero ha evadido el ataque de un zombie gracias a su habilidad!");
+                        if (((Guerrero) personajes.get(indicePersonaje)).evadir()) {
+                            JOptionPane.showMessageDialog(null, "El Guerrero ha evadido el ataque de un zombie gracias a su habilidad!");
+                            statsPanel.registroResultados.append("El Guerrero ha evadido el ataque de un zombie gracias a su habilidad!\n");
+                        }
                         else if (((Guerrero) personajes.get(indicePersonaje)).isHabAmortiguar()) {
-                            personajes.get(indicePersonaje).RecibirDano(zombies.get(z).getAtaque() - zombies.get(z).getAtaque() * 20 / 100);
+                            personajes.get(indicePersonaje).RecibirDano(zombies.get(z).getAtaque() - zombies.get(z).getAtaque() * 15 / 100);
                             registrarAtaqueZombie(zombies.get(z), personajes.get(indicePersonaje), danoRecibido - personajes.get(indicePersonaje).getSalud());
                         }
                         else {
@@ -170,7 +172,7 @@ public class Tablero extends JFrame {
 
                     }
                     else if (((Guerrero) personajes.get(indicePersonaje)).isHabAmortiguar()){
-                        personajes.get(indicePersonaje).RecibirDano(zombies.get(z).getAtaque() - zombies.get(z).getAtaque() * 20 / 100);
+                        personajes.get(indicePersonaje).RecibirDano(zombies.get(z).getAtaque() - zombies.get(z).getAtaque() * 15 / 100);
                         registrarAtaqueZombie(zombies.get(z), personajes.get(indicePersonaje), danoRecibido - personajes.get(indicePersonaje).getSalud());
                     }
                     else {
@@ -255,10 +257,11 @@ public class Tablero extends JFrame {
                 }
                 cuadradosGLogico[personajes.get(p).getPosX()][personajes.get(p).getPosY()] = new Casilla(personajes.get(p).getPosX(), personajes.get(p).getPosY());
                 indiceEliminar = p;
+                if (indiceEliminar>=0)
+                    personajes.remove(indiceEliminar);
+                indiceEliminar = -1;
             }
         }
-        if (indiceEliminar>=0)
-            personajes.remove(indiceEliminar);
         if (personajes.isEmpty()){
             statsPanel.registroResultados.append("¡¡¡NOO, han muerto todos tus personajes!!!");
             // habilitar reinicio de juego
@@ -1035,13 +1038,16 @@ public class Tablero extends JFrame {
                             if (isValidMove(actualX, actualY, posItemX, posItemY)){
                                 if (item instanceof Bebida){
                                     personajes.get(i).setSalud(personajes.get(i).getSalud()+((Bebida) item).getMasSalud());
+                                    statsPanel.registroResultados.append("El Guerrero ha recogido una Bebida por el camino y se ha recuperado "+(personajes.get(i).getSalud()-(personajes.get(i).getSalud()-((Bebida) item).getMasSalud()))+".\n");
                                 }
                                 else if (item instanceof Insignia){
                                     personajes.get(i).setExperiencia(personajes.get(i).getExperiencia()+((Insignia) item).getMasExperiencia());
+                                    statsPanel.registroResultados.append("El Guerrero ha obtenido "+(personajes.get(i).getExperiencia()-(personajes.get(i).getExperiencia()-((Insignia) item).getMasExperiencia()))+" de experiencia al encontrar una insignia.\n");
                                 }
                                 else {
                                     personajes.get(i).setDesplazamientoPorTurno(personajes.get(i).getDesplazamientoPorTurno()+1);
                                     personajes.get(i).setAtaquesPorTurno(personajes.get(i).getAtaquesPorTurno()+1);
+                                    statsPanel.registroResultados.append("El Guerrero ha obtenido un desplazamiento y un ataque extra este turno, úsalos sabiamente.\n");
                                 }
                                 cuadradosGLogico[personajes.get(i).getPosX()][personajes.get(i).getPosY()] = new Casilla(personajes.get(i).getPosX(), personajes.get(i).getPosY());
                                 personajes.get(i).setPosX(posItemX);
@@ -1067,13 +1073,16 @@ public class Tablero extends JFrame {
                             if (isValidMove(actualX, actualY, posItemX, posItemY)){
                                 if (item instanceof Bebida){
                                     personajes.get(i).setSalud(personajes.get(i).getSalud()+((Bebida) item).getMasSalud());
+                                    statsPanel.registroResultados.append("El Arquero ha recogido una Bebida por el camino y se ha recuperado "+(personajes.get(i).getSalud()-(personajes.get(i).getSalud()-((Bebida) item).getMasSalud()))+".\n");
                                 }
                                 else if (item instanceof Insignia){
                                     personajes.get(i).setExperiencia(personajes.get(i).getExperiencia()+((Insignia) item).getMasExperiencia());
+                                    statsPanel.registroResultados.append("El Arquero ha obtenido "+(personajes.get(i).getExperiencia()-(personajes.get(i).getExperiencia()-((Insignia) item).getMasExperiencia()))+" de experiencia al encontrar una insignia.\n");
                                 }
                                 else {
                                     personajes.get(i).setDesplazamientoPorTurno(personajes.get(i).getDesplazamientoPorTurno()+1);
                                     personajes.get(i).setAtaquesPorTurno(personajes.get(i).getAtaquesPorTurno()+1);
+                                    statsPanel.registroResultados.append("El Arquero ha obtenido un desplazamiento y un ataque extra este turno, úsalos sabiamente.\n");
                                 }
                                 if (arqueroEncaramado){
                                     cuadradosGLogico[personajes.get(i).getPosX()][personajes.get(i).getPosY()] = respaldoCasilla;
@@ -1087,7 +1096,7 @@ public class Tablero extends JFrame {
                                     personajes.get(i).setPosX(posItemX);
                                     personajes.get(i).setPosY(posItemY);
                                 }
-                                cuadradosGLogico[personajes.get(i).getPosX()][personajes.get(i).getPosY()] = (JugadorCasilla) new JugadorCasilla(personajes.get(i).getPosX(), personajes.get(i).getPosY(), personajes.get(i));
+                                cuadradosGLogico[personajes.get(i).getPosX()][personajes.get(i).getPosY()] = new JugadorCasilla(personajes.get(i).getPosX(), personajes.get(i).getPosY(), personajes.get(i));
                                 personajes.get(i).setDesplazamientoPorTurno(personajes.get(i).getDesplazamientoPorTurno() - 1);
                                 cuadradosGLogico[posItemX][posItemY].setBorder(BorderFactory.createLineBorder(Color.RED));
                             } else {
@@ -1108,13 +1117,16 @@ public class Tablero extends JFrame {
                             if (isValidMove(actualX, actualY, posItemX, posItemY)){
                                 if (item instanceof Bebida){
                                     personajes.get(i).setSalud(personajes.get(i).getSalud()+((Bebida) item).getMasSalud());
+                                    statsPanel.registroResultados.append("El Agente ha recogido una Bebida por el camino y se ha recuperado "+(personajes.get(i).getSalud()-(personajes.get(i).getSalud()-((Bebida) item).getMasSalud()))+".\n");
                                 }
                                 else if (item instanceof Insignia){
                                     personajes.get(i).setExperiencia(personajes.get(i).getExperiencia()+((Insignia) item).getMasExperiencia());
+                                    statsPanel.registroResultados.append("El Agente ha obtenido "+(personajes.get(i).getExperiencia()-(personajes.get(i).getExperiencia()-((Insignia) item).getMasExperiencia()))+" de experiencia al encontrar una insignia.\n");
                                 }
                                 else {
                                     personajes.get(i).setDesplazamientoPorTurno(personajes.get(i).getDesplazamientoPorTurno()+1);
                                     personajes.get(i).setAtaquesPorTurno(personajes.get(i).getAtaquesPorTurno()+1);
+                                    statsPanel.registroResultados.append("El Agente ha obtenido un desplazamiento y un ataque extra este turno, úsalos sabiamente.\n");
                                 }
                                 cuadradosGLogico[personajes.get(i).getPosX()][personajes.get(i).getPosY()] = new Casilla(personajes.get(i).getPosX(), personajes.get(i).getPosY());
                                 personajes.get(i).setPosX(posItemX);
@@ -1143,8 +1155,15 @@ public class Tablero extends JFrame {
             if (Math.abs(actualX-personajes.get(p).getPosX()) <= rango && actualY==personajes.get(p).getPosY()){
                 distancia = Math.abs(actualX-personajes.get(p).getPosX());
                 for (int i=1;i<distancia;i++){
-                    if (cuadradosGLogico[actualX+i][actualY] instanceof Montaña || cuadradosGLogico[actualX+i][actualY] instanceof Escombro || cuadradosGLogico[actualX+i][actualY] instanceof SpawningPoint) {
-                        return -1;
+                    if (actualX>personajes.get(p).getPosX()){
+                        if (cuadradosGLogico[actualX-i][actualY] instanceof Montaña || cuadradosGLogico[actualX-i][actualY] instanceof Escombro || cuadradosGLogico[actualX-i][actualY] instanceof SpawningPoint) {
+                            return -1;
+                        }
+                    }
+                    else {
+                        if (cuadradosGLogico[actualX + i][actualY] instanceof Montaña || cuadradosGLogico[actualX + i][actualY] instanceof Escombro || cuadradosGLogico[actualX + i][actualY] instanceof SpawningPoint) {
+                            return -1;
+                        }
                     }
                 }
                 return p;
@@ -1152,8 +1171,15 @@ public class Tablero extends JFrame {
             else if (Math.abs(actualY-personajes.get(p).getPosY()) <= rango && actualX==personajes.get(p).getPosX()){
                 distancia = Math.abs(actualY-personajes.get(p).getPosY());
                 for (int i=1;i<distancia;i++){
-                    if (cuadradosGLogico[actualX][actualY+i] instanceof Montaña || cuadradosGLogico[actualX][actualY+i] instanceof Escombro || cuadradosGLogico[actualX][actualY+i] instanceof SpawningPoint) {
-                        return -1;
+                    if (actualY>personajes.get(p).getPosY()){
+                        if (cuadradosGLogico[actualX][actualY-i] instanceof Montaña || cuadradosGLogico[actualX][actualY-i] instanceof Escombro || cuadradosGLogico[actualX][actualY-i] instanceof SpawningPoint) {
+                            return -1;
+                        }
+                    }
+                    else {
+                        if (cuadradosGLogico[actualX][actualY + i] instanceof Montaña || cuadradosGLogico[actualX][actualY + i] instanceof Escombro || cuadradosGLogico[actualX][actualY + i] instanceof SpawningPoint) {
+                            return -1;
+                        }
                     }
                 }
                 return p;
@@ -1208,6 +1234,7 @@ public class Tablero extends JFrame {
     private void atacarZombie(int atacarX, int atacarY){
         int actualX;
         int actualY;
+        int nivelActual;
         if (arqueroSeleccionado||guerreroSeleccionado||agenteSeleccionado){
             for (int i=0;i<personajes.size();i++){
                 if (guerreroSeleccionado){
@@ -1221,9 +1248,9 @@ public class Tablero extends JFrame {
                                 for (int z=0;z<zombies.size();z++){
                                     if (zombies.get(z).getPosX()==atacarX && zombies.get(z).getPosY() == atacarY){
                                         zombies.get(z).recibirDano(personajes.get(i).getArma().getDano());
-                                        personajes.get(i).setRuidoActivo(personajes.get(i).getArma().getRuido());
                                         if (zombies.get(z).getSalud()<=0){
                                             //se añade algoritmo de item
+                                            nivelActual = personajes.get(i).getNivel();
                                             cuadradosGLogico[atacarX][atacarY] = dropItem(atacarX, atacarY);
                                             if (zombies.get(z) instanceof ZombieBasico)
                                                 personajes.get(i).aumentarNivel(3);
@@ -1231,14 +1258,28 @@ public class Tablero extends JFrame {
                                                 personajes.get(i).aumentarNivel(5);
                                             else
                                                 personajes.get(i).aumentarNivel(7);
+                                            if (personajes.get(i).getNivel() != nivelActual){
+                                                if (personajes.get(i).getNivel()==2)
+                                                    statsPanel.registroResultados.append("Ahora el Guerrero posee la habilidad de amortiguar ataque, Ahora el Guerrero reduce un 15% el daño recibido de un ataque.\n");
+                                                else if (personajes.get(i).getNivel() == 3){
+                                                    statsPanel.registroResultados.append("Ahora el Guerrero posee la habilidad de evadir ataque, Ahora el Guerrero tiene un 33% de evadir un ataque.\n");
+                                                    statsPanel.registroResultados.append("Ahora el Guerrero posee como Arma la MAZA!!\n");
+                                                }
+                                                else if (personajes.get(i).getNivel() == 4){
+                                                    statsPanel.registroResultados.append("Ahora el Guerrero posee la habilidad de Atacar doble, Puede atacar 2 veces por turno.\n");
+                                                    statsPanel.registroResultados.append("Ahora el Guerrero posee como Arma la SIERRA!!\n");
+                                                }
+                                            }
                                             personajes.get(i).actualizarNivel();
                                             zombies.remove(z);
-                                            statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie y lo ha eliminado.\n");
+                                            statsPanel.registroResultados.append("El Guerrero ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie y lo ha eliminado.\n");
                                         }
                                         else {
-                                            statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie.\n");
+                                            statsPanel.registroResultados.append("EL Guerrero ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie.\n");
                                         }
                                         //zombies.get(z).getSalud()personajes.get(i).getArma().getDano();
+                                        personajes.get(i).setRuidoActivo(personajes.get(i).getArma().getRuido());
+                                        statsPanel.registroResultados.append("El ruido generado por el Guerrero es ahora de "+personajes.get(i).getRuidoActivo()+"\n");
                                     }
                                 }
                             }
@@ -1273,6 +1314,7 @@ public class Tablero extends JFrame {
                                             personajes.get(i).setRuidoActivo(personajes.get(i).getArma().getRuido());
                                         if (zombies.get(z).getSalud()<=0){
                                             //se añade algoritmo de item
+                                            nivelActual = personajes.get(i).getNivel();
                                             cuadradosGLogico[atacarX][atacarY] = dropItem(atacarX, atacarY);
                                             if (zombies.get(z) instanceof ZombieBasico)
                                                 personajes.get(i).aumentarNivel(3);
@@ -1280,14 +1322,26 @@ public class Tablero extends JFrame {
                                                 personajes.get(i).aumentarNivel(5);
                                             else
                                                 personajes.get(i).aumentarNivel(7);
+                                            if (personajes.get(i).getNivel() != nivelActual){
+                                                if (personajes.get(i).getNivel()==2)
+                                                    statsPanel.registroResultados.append("Ahora el Arquero posee la habilidad de hacer daño crítico, su daño aumenta un 30%.\n");
+                                                else if (personajes.get(i).getNivel() == 3){
+                                                    statsPanel.registroResultados.append("Ahora el Arquero posee la habilidad de Subir obstaculos. Se podrá subir a montañas y escombros para atacar, pero su posicion queda expuesta.\n");
+                                                }
+                                                else if (personajes.get(i).getNivel() == 4){
+                                                    statsPanel.registroResultados.append("Ahora el Arquero posee la habilidad de menor ruido, Al atacar reduce el ruido producido en un 40%.\n");
+                                                    statsPanel.registroResultados.append("Ahora el Arquero posee como Arma el FRANCOTIRADOR!!\n");
+                                                }
+                                            }
                                             zombies.remove(z);
                                             personajes.get(i).actualizarNivel();
-                                            statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie y lo ha eliminado.\n");
+                                            statsPanel.registroResultados.append("El Arquero ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie y lo ha eliminado.\n");
                                         }
                                         else {
-                                            statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie.\n");
+                                            statsPanel.registroResultados.append("El Arquero ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie.\n");
                                         }
                                         //zombies.get(z).getSalud()personajes.get(i).getArma().getDano();
+                                        statsPanel.registroResultados.append("El ruido generado por el Arquero es ahora de "+personajes.get(i).getRuidoActivo()+"\n");
                                     }
                                 }
                             }
@@ -1313,9 +1367,9 @@ public class Tablero extends JFrame {
                                 for (int z=0;z<zombies.size();z++){
                                     if (zombies.get(z).getPosX()==atacarX && zombies.get(z).getPosY() == atacarY){
                                         zombies.get(z).recibirDano(personajes.get(i).getArma().getDano());
-                                        personajes.get(i).setRuidoActivo(personajes.get(i).getArma().getRuido());
                                         if (zombies.get(z).getSalud()<=0){
                                             //se añade algoritmo de item
+                                            nivelActual = personajes.get(i).getNivel();
                                             cuadradosGLogico[atacarX][atacarY] = dropItem(atacarX, atacarY);
                                             if (zombies.get(z) instanceof ZombieBasico)
                                                 personajes.get(i).aumentarNivel(3);
@@ -1323,14 +1377,27 @@ public class Tablero extends JFrame {
                                                 personajes.get(i).aumentarNivel(5);
                                             else
                                                 personajes.get(i).aumentarNivel(7);
+                                            if (personajes.get(i).getNivel() != nivelActual){
+                                                if (personajes.get(i).getNivel()==2)
+                                                    statsPanel.registroResultados.append("Ahora el Agente posee la habilidad de duplicar la experiencia obtenida.\n");
+                                                else if (personajes.get(i).getNivel() == 3){
+                                                    statsPanel.registroResultados.append("Ahora el Agente posee la habilidad de regeneración. Se curará automáticamente 10 puntos de vida cada turno.\n");
+                                                    statsPanel.registroResultados.append("Ahora el Agente posee como Arma un Rifle!.\n");
+                                                }
+                                                else if (personajes.get(i).getNivel() == 4){
+                                                    statsPanel.registroResultados.append("Ahora el Agente posee la habilidad de movimiento doble, puede desplazarse el doble de veces cada turno.\n");
+                                                }
+                                            }
                                             zombies.remove(z);
                                             personajes.get(i).actualizarNivel();
-                                            statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie y lo ha eliminado.\n");
+                                            statsPanel.registroResultados.append("El Agente ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie y lo ha eliminado.\n");
                                         }
                                         else {
-                                            statsPanel.registroResultados.append("Se ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie.\n");
+                                            statsPanel.registroResultados.append("El Agente ha inflingido "+personajes.get(i).getArma().getDano()+" a un zombie.\n");
                                         }
                                         //zombies.get(z).getSalud()personajes.get(i).getArma().getDano();
+                                        personajes.get(i).setRuidoActivo(personajes.get(i).getArma().getRuido());
+                                        statsPanel.registroResultados.append("El ruido generado por el Agente es ahora de "+personajes.get(i).getRuidoActivo()+"\n");
                                     }
                                 }
                             }
@@ -1575,6 +1642,9 @@ public class Tablero extends JFrame {
         private JLabel nivelGuerrero = new JLabel("Guerrero: ");
         private JLabel nivelArquero = new JLabel("Arquero: ");
         private JLabel nivelAgente = new JLabel("Agente: ");
+        private JLabel rangoGuerrero = new JLabel("Guerrero: ");
+        private JLabel rangoArquero = new JLabel("Arquero: ");
+        private JLabel rangoAgente = new JLabel("Agente: ");
 
         private JTextArea registroResultados = new JTextArea();
         private JScrollPane scrollResultado = new JScrollPane();
@@ -1584,9 +1654,12 @@ public class Tablero extends JFrame {
             setVisible(true);
             setBackground(new Color(28, 89, 95));
             setLayout(null);
-            saludAgente.setBounds(5,5,285,20);
-            saludArquero.setBounds(5,95,285,20);
-            saludGuerrero.setBounds(5,185,285,20);
+            saludAgente.setBounds(5,5,165,20);
+            rangoAgente.setBounds(165,5,125,20);
+            saludArquero.setBounds(5,95,165,20);
+            rangoArquero.setBounds(165,95,125,20);
+            saludGuerrero.setBounds(5,185,165,20);
+            rangoGuerrero.setBounds(165,185,125,20);
 
             saludAgente.setForeground(Color.WHITE);
             saludArquero.setForeground(Color.WHITE);
@@ -1597,6 +1670,9 @@ public class Tablero extends JFrame {
             nivelAgente.setForeground(Color.WHITE);
             nivelArquero.setForeground(Color.WHITE);
             nivelGuerrero.setForeground(Color.WHITE);
+            rangoGuerrero.setForeground(Color.WHITE);
+            rangoAgente.setForeground(Color.WHITE);
+            rangoArquero.setForeground(Color.WHITE);
 
             saludAgente.setFont(new Font("HelveticaNeue-Bold", 10,12));
             saludArquero.setFont(new Font("HelveticaNeue-Bold", 10,12));
@@ -1607,8 +1683,11 @@ public class Tablero extends JFrame {
             nivelAgente.setFont(new Font("HelveticaNeue-Bold", 10,12));
             nivelArquero.setFont(new Font("HelveticaNeue-Bold", 10,12));
             nivelGuerrero.setFont(new Font("HelveticaNeue-Bold", 10,12));
+            rangoGuerrero.setFont(new Font("HelveticaNeue-Bold", 10,12));
+            rangoAgente.setFont(new Font("HelveticaNeue-Bold", 10,12));
+            rangoArquero.setFont(new Font("HelveticaNeue-Bold", 10,12));
 
-            ataqueAgente.setBounds(5,35,285,20);
+            ataqueAgente.setBounds(5,35,185,20);
             ataqueArquero.setBounds(5,125,285,20);
             ataqueGuerrero.setBounds(5,215,285,20);
 
@@ -1628,7 +1707,7 @@ public class Tablero extends JFrame {
 
             botonTurno.setBackground(new Color(116, 14, 6));
             botonTurno.setForeground(new Color(253, 120, 48));
-            botonTurno.setBounds(80, 280, 150, 40);
+            botonTurno.setBounds(75, 285, 150, 40);
             botonTurno.setVisible(true);
             botonTurno.addActionListener(turnoListener);
 
@@ -1643,6 +1722,9 @@ public class Tablero extends JFrame {
             add(nivelGuerrero);
             add(scrollResultado);
             add(botonTurno);
+            add(rangoAgente);
+            add(rangoArquero);
+            add(rangoGuerrero);
         }
         private void actualizarPaneles(){
             boolean guerreroExiste=false;
@@ -1661,33 +1743,39 @@ public class Tablero extends JFrame {
                     saludGuerrero.setText("   El Guerrero ha muerto.");
                     ataqueGuerrero.setText("Ataque del guerrero: 0");
                     nivelGuerrero.setText("Nivel del guerrero: 0");
+                    rangoGuerrero.setText("Rango del guerrero: 0");
                 }
                 else if (!arqueroExiste){
                     saludArquero.setText("   El Arquero ha muerto.");
-                    ataqueArquero.setText("Ataque del arquero: 0");
-                    nivelArquero.setText("Nivel del arquero: 0");
+                    ataqueArquero.setText("Ataque del Arquero: 0");
+                    nivelArquero.setText("Nivel del Arquero: 0");
+                    rangoArquero.setText("Rango del Arquero: 0");
                 }
                 else if (!agenteExiste){
                     saludAgente.setText("   El Agente ha muerto.");
-                    ataqueAgente.setText("Ataque del agente: 0");
-                    nivelAgente.setText("Nivel del agente: 0");
+                    ataqueAgente.setText("Ataque del Agente: 0");
+                    nivelAgente.setText("Nivel del Agente: 0");
+                    rangoAgente.setText("Rango del Angete: 0");
                 }
             }
             for (int i = 0; i<personajes.size(); i++){
                 if (personajes.get(i) instanceof Guerrero && guerreroExiste) {
-                    saludGuerrero.setText("Salud del guerrero: " + personajes.get(i).getSalud());
-                    ataqueGuerrero.setText("Ataque del guerrero: " + personajes.get(i).getArma().getDano());
-                    nivelGuerrero.setText("Nivel del guerrero: " + personajes.get(i).getNivel());
+                    saludGuerrero.setText("Salud del Guerrero: " + personajes.get(i).getSalud());
+                    ataqueGuerrero.setText("Ataque del Guerrero: " + personajes.get(i).getArma().getDano());
+                    nivelGuerrero.setText("Nivel del Guerrero: " + personajes.get(i).getNivel());
+                    rangoGuerrero.setText("Rango del Guerrero: " + personajes.get(i).getArma().getRango());
                 }
                 else if (personajes.get(i) instanceof Arquero && arqueroExiste) {
-                    saludArquero.setText("Salud del arquero: " + personajes.get(i).getSalud());
-                    ataqueArquero.setText("Ataque del arquero: " + personajes.get(i).getArma().getDano());
-                    nivelArquero.setText("Nivel del arquero: " + personajes.get(i).getNivel());
+                    saludArquero.setText("Salud del Arquero: " + personajes.get(i).getSalud());
+                    ataqueArquero.setText("Ataque del Arquero: " + personajes.get(i).getArma().getDano());
+                    nivelArquero.setText("Nivel del Arquero: " + personajes.get(i).getNivel());
+                    rangoArquero.setText("Rango del Arquero: " + personajes.get(i).getArma().getRango());
                 }
                 else if (personajes.get(i) instanceof Agente && agenteExiste){
-                    saludAgente.setText("Salud del agente: " + personajes.get(i).getSalud());
-                    ataqueAgente.setText("Ataque del agente: " + personajes.get(i).getArma().getDano());
-                    nivelAgente.setText("Nivel del agente: " + personajes.get(i).getNivel());
+                    saludAgente.setText("Salud del Agente: " + personajes.get(i).getSalud());
+                    ataqueAgente.setText("Ataque del Agente: " + personajes.get(i).getArma().getDano());
+                    nivelAgente.setText("Nivel del Agente: " + personajes.get(i).getNivel());
+                    rangoAgente.setText("Rango del Agente: " + personajes.get(i).getArma().getRango());
                 }
             }
         }
